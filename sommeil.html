@@ -105,9 +105,16 @@
           </div>
           <div class="tiles" id="sumTiles"></div>
         </div>
+        <div class="s-card">
+          <div class="card-head">
+            <h3>Indicateurs clés</h3>
+            <div class="q-legend" data-qlegend></div>
+          </div>
+          <div class="rings" id="sumRings"></div>
+        </div>
         <div class="sum-grid">
           <div class="s-card">
-            <h3>Hypnogramme estimé et niveau sonore <span class="legend"><i class="band"></i>sommeil estimé <i style="background:#9085e9"></i>niveau médian</span></h3>
+            <h3>Hypnogramme estimé</h3>
             <div class="chart-box" id="sumHypno"></div>
           </div>
           <div class="s-card">
@@ -164,11 +171,11 @@
             <div class="chart-box" id="brSnoreDb"></div>
           </div>
           <div class="s-card">
-            <h3>Rythme respiratoire estimé (respirations / min)</h3>
+            <h3>Rythme respiratoire estimé <small class="muted">respirations / min · moyenne glissante 7 min</small></h3>
             <div class="chart-box" id="brRate"></div>
           </div>
           <div class="s-card">
-            <h3>Régularité de la respiration (0 → 1)</h3>
+            <h3>Régularité de la respiration <small class="muted">0 → 1 · moyenne glissante 7 min</small></h3>
             <div class="chart-box" id="brReg"></div>
           </div>
         </div>
@@ -205,7 +212,7 @@
         <div class="sum-grid">
           <div class="s-card">
             <h3>Bruits environnants par type</h3>
-            <div class="chart-box" id="envTypes"></div>
+            <div class="hbars" id="envTypes"></div>
           </div>
           <div class="s-card">
             <h3>Bruits les plus forts</h3>
@@ -227,12 +234,22 @@
         </div>
         <div class="table-wrap"><table class="tbl" id="histTable"></table></div>
       </div>
-      <div class="s-card">
-        <div class="card-head">
-          <h3>Évolution au fil des nuits</h3>
-          <select id="trendMetric"></select>
+      <div class="hist-grid">
+        <div class="s-card">
+          <div class="card-head">
+            <h3>Évolution au fil des nuits</h3>
+            <select id="trendMetric"></select>
+          </div>
+          <div class="chart-box" id="trendChart"></div>
         </div>
-        <div class="chart-box" id="trendChart"></div>
+        <div class="s-card">
+          <div class="card-head">
+            <h3>Calendrier des nuits</h3>
+            <div class="q-legend" data-qlegend></div>
+          </div>
+          <div class="calendar" id="calendar"></div>
+          <p class="hint" id="calendarHint"></p>
+        </div>
       </div>
       <div class="s-card">
         <div class="card-head">

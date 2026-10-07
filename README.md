@@ -72,6 +72,8 @@ Onglets :
 - **Environnement** : niveaux, types de bruits, bruits les plus forts, bruits suivis d'un réveil.
 - **Historique** : toutes les nuits, évolution d'un indicateur, comparaison de deux nuits.
 
+**Couleurs du rapport** : chaque indicateur reçoit un score de qualité. Il s'affiche sur une échelle continue, du **vert** (favorable) à l'**orange** puis au **rouge** (défavorable). Les couleurs sont interpolées en OKLCH, et la palette a été vérifiée sur le fond sombre. Chaque couleur est toujours accompagnée d'une valeur ou d'un mot (« favorable », « intermédiaire », « défavorable ») pour rester lisible par les personnes daltoniennes. Les seuils sont dans `js/sleep/quality.js`.
+
 Seuls de courts extraits WAV des événements sont gardés (25 par type par défaut, réglable), jamais la nuit entière. Pour découvrir l'interface sans attendre une nuit : **Historique → Charger 7 nuits de démonstration** (données fictives, jamais sauvegardées).
 
 ```text
@@ -192,7 +194,8 @@ sommeil.html            application Sommeil
 css/sommeil.css         styles de l'application Sommeil
 js/sleep/monitor.js     surveillance de la nuit (classification, épisodes, pauses, respiration)
 js/sleep/analysis.js    sommeil/éveil, statistiques, interprétations, comparaisons
-js/sleep/charts.js      graphiques Canvas (courbes, barres, chronologie zoomable)
+js/sleep/charts.js      graphiques (courbes lissées, barres pilules, jauges, calendrier, chronologie zoomable)
+js/sleep/quality.js     échelle de qualité vert → rouge et seuils de chaque indicateur
 js/sleep/app.js         interface et onglets
 js/sleep/categories.js  catégories nocturnes ↔ classes YAMNet
 js/sleep/store.js       nuits sur le Bureau (via server.py)
