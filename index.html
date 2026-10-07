@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual Singer · Audio Monitor</title>
+  <meta name="description" content="Moniteur audio 3D temps réel et supervision serveur — 100 % local.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a2b2f'/%3E%3Cpath d='M7 16h2M11 11v10M15 7v18M19 12v8M23 14v4' stroke='%23ff4d3d' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============================ BARRE SUPÉRIEURE ============================ -->
+  <header class="topbar">
+    <button class="icon-btn" id="btnSidebar" title="Afficher / masquer le panneau latéral (B)" aria-label="Panneau latéral">
+      <svg viewBox="0 0 16 16"><path d="M2 3h12M2 8h12M2 13h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+    </button>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 12h1.5M7 8v8M11 4v16M15 9v6M19 11v2M21.5 12h-1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+      </div>
+      <div class="brand-text">
+        <b>VISUAL SINGER</b>
+        <span>Server &amp; audio monitor</span>
+      </div>
+    </div>
+
+    <div class="stat-strip" id="serverStrip">
+      <div class="stat"><label>SERVER STATUS</label><b id="tbStatus" data-state="offline">—</b></div>
+      <div class="stat"><label>PLAYERS</label><b id="tbPlayers">— / —</b></div>
+      <div class="stat"><label>TICK</label><b id="tbTps">— TPS</b></div>
+      <div class="stat hide-sm"><label>CPU</label><b id="tbCpu">—</b></div>
+      <div class="stat hide-sm"><label>RAM</label><b id="tbRam">—</b></div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="stat-group">
+        <div class="stat"><label>AUDIO</label><b id="tbAudio" data-state="off">OFFLINE</b></div>
+        <div class="stat hide-sm"><label>FPS</label><b id="tbFps">—</b></div>
+        <div class="stat hide-md"><label>SESSION</label><b id="tbClock">00:00</b></div>
+      </div>
+      <button class="btn" data-drawer="settings" title="Paramètres (S)">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>SETTINGS</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================ CENTRE ================================= -->
+  <main class="main">
+
+    <!-- ---------- Panneau latéral ---------- -->
+    <aside class="sidebar" id="sidebar">
+      <section class="panel">
+        <h3><span class="dot" id="srvDot"></span>SERVER<small id="srvSource">—</small></h3>
+        <div class="kv"><span>NAME</span><b id="srvName">—</b></div>
+        <div class="kv"><span>VERSION</span><b id="srvVersion">—</b></div>
+        <div class="kv"><span>UPTIME</span><b id="srvUptime">—</b></div>
+        <div class="kv"><span>MSPT</span><b id="srvMspt">—</b></div>
+        <div class="spark-row">
+          <div class="spark"><label>TPS</label><canvas id="sparkTps"></canvas></div>
+          <div class="spark"><label>PLAYERS</label><canvas id="sparkPlayers"></canvas></div>
+        </div>
+        <div class="srv-msg" id="srvMsg"></div>
+      </section>
+
+      <section class="panel">
+        <h3><span class="dot" id="micDot"></span>MICROPHONE</h3>
+        <button class="btn-mic" id="btnMic"><span class="ico">🎙</span><span id="btnMicLabel">CONNECT MICROPHONE</span></button>
+        <div class="mic-status" id="micStatus">○ MICROPHONE OFF</div>
+        <div class="meter" title="Niveau du signal d'entrée (RMS / crête)">
+          <div class="meter-scale"></div>
+          <div class="meter-fill" id="micMeter"></div>
+          <div class="meter-peak" id="micPeak"></div>
+        </div>
+        <div class="kv"><span>DEVICE</span><b id="micDevice" class="ellipsis">—</b></div>
+        <div class="kv"><span>SAMPLE RATE</span><b id="micRate">—</b></div>
+        <div class="kv"><span>FFT SIZE</span><b id="micFft">—</b></div>
+        <div class="kv"><span>DOMINANT</span><b id="micDom">—</b></div>
+        <div class="kv"><span>VOLUME</span><b id="micVol">—</b></div>
+        <div class="kv"><span>CLIPPING</span><b id="micClip" class="ok">NONE</b></div>
+      </section>
+
+      <section class="panel">
+        <h3>AUDIO<small id="audioAt">LIVE</small></h3>
+        <div class="band-row" data-zone="bass"><span>BASS</span><div class="bar"><i id="barBass"></i></div><b id="valBass">0%</b></div>
+        <div class="band-row" data-zone="mid"><span>MID</span><div class="bar"><i id="barMid"></i></div><b id="valMid">0%</b></div>
+        <div class="band-row" data-zone="treble"><span>TREBLE</span><div class="bar"><i id="barTreble"></i></div><b id="valTreble">0%</b></div>
+        <div class="band-row" data-zone="intensity"><span>INTENSITY</span><div class="bar"><i id="barInt"></i></div><b id="valInt">0%</b></div>
+        <div class="kv dominant"><span>DOMINANT ZONE</span><b id="domZone">—</b></div>
+        <div class="kv"><span>RANGES</span><b id="zoneRanges">—</b></div>
+      </section>
+
+      <section class="panel grow">
+        <h3>PEAKS<small id="peakCount">0</small></h3>
+        <ul class="peak-list" id="peakList"><li class="empty">Aucun pic détecté</li></ul>
+      </section>
+    </aside>
+
+    <!-- ---------- Visualisation 3D ---------- -->
+    <section class="viewport" id="viewport">
+      <div class="gl" id="gl"></div>
+      <div class="labels" id="labels"></div>
+      <div class="vignette"></div>
+
+      <div class="hud" id="hud">
+        <div class="hud-row big">
+          <span class="k">INTENSITY</span><span class="v" id="hudInt">0%</span><span class="u" id="hudDb">−∞ dB</span>
+        </div>
+        <div class="hud-bar"><i id="hudIntBar"></i></div>
+        <div class="hud-row">
+          <span class="k">DOM FREQ</span><span class="v" id="hudFreq">—</span><span class="u" id="hudNote"></span>
+        </div>
+        <div class="hud-zones">
+          <div class="hz" data-zone="bass"><div class="hz-bar"><i id="hzBass"></i></div><span>BASS</span><b id="hzBassV">0</b></div>
+          <div class="hz" data-zone="mid"><div class="hz-bar"><i id="hzMid"></i></div><span>MID</span><b id="hzMidV">0</b></div>
+          <div class="hz" data-zone="treble"><div class="hz-bar"><i id="hzTreble"></i></div><span>TREBLE</span><b id="hzTrebleV">0</b></div>
+        </div>
+        <div class="hud-row">
+          <span class="k">PEAK</span><span class="v" id="hudPeak">−∞</span><span class="u">dBFS</span><span class="clip" id="hudClip">CLIP</span>
+        </div>
+        <div class="hud-row">
+          <span class="k">TIME</span><span class="v" id="hudTime">00:00.0</span><span class="u" id="hudOffset">LIVE</span>
+        </div>
+      </div>
+
+      <div class="mode-badge" id="modeBadge" data-mode="live"><span class="mb-dot"></span><span id="modeText">LIVE</span></div>
+      <div class="peak-flash" id="peakFlash"></div>
+
+      <div class="cam-bar" role="toolbar" aria-label="Caméra">
+        <button data-view="TOP" title="Vue de dessus (1)">TOP</button>
+        <button data-view="FRONT" title="Vue de face — spectre (2)">FRONT</button>
+        <button data-view="SIDE" title="Vue de côté — axe du temps (3)">SIDE</button>
+        <button data-view="3D" title="Vue 3D (4)">3D</button>
+        <button data-view="RESET" title="Réinitialiser la caméra (R)">RESET</button>
+        <button id="btnAutoRotate" class="toggle" title="Rotation automatique (A)">⟳ AUTO</button>
+      </div>
+
+      <div class="axis-legend">
+        <span><i class="ax"></i>X · TEMPS</span><span><i class="ax"></i>Y · FRÉQUENCE</span><span><i class="ax"></i>Z · INTENSITÉ</span>
+        <em>glisser : rotation · clic droit : déplacer · molette : zoom</em>
+      </div>
+
+      <!-- Écran de connexion / erreur -->
+      <div class="overlay" id="overlay" data-state="idle">
+        <div class="card connect-card">
+          <div class="card-icon">🎙</div>
+          <h2>Moniteur audio 3D</h2>
+          <p>Connectez le microphone pour générer le terrain audio en temps réel.
+            Les données restent sur cet ordinateur : rien n'est envoyé sur Internet.</p>
+          <button class="btn-mic big" data-action="mic"><span class="ico">🎙</span>CONNECT MICROPHONE</button>
+          <button class="btn ghost" data-action="demo">▶ Lancer le signal de démonstration</button>
+        </div>
+        <div class="card wait-card">
+          <div class="spinner"></div>
+          <h2>En attente d'autorisation…</h2>
+          <p>Acceptez la demande d'accès au microphone affichée par le navigateur.</p>
+        </div>
+        <div class="card error-card">
+          <div class="card-icon err">⚠</div>
+          <h2 id="errTitle">Erreur microphone</h2>
+          <p id="errMessage"></p>
+          <p class="hint" id="errHint"></p>
+          <code class="err-code" id="errCode"></code>
+          <div class="card-actions">
+            <button class="btn-mic" data-action="mic"><span class="ico">↻</span>RÉESSAYER</button>
+            <button class="btn ghost" data-action="demo">▶ Mode démonstration</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Tiroir latéral (couleurs / paramètres) ---------- -->
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <h3 id="drawerTitle">SETTINGS</h3>
+        <button class="icon-btn" id="drawerClose" title="Fermer (Échap)">✕</button>
+      </div>
+
+      <!-- Couleurs -->
+      <div class="drawer-body" data-pane="colors">
+        <h4>PRESETS</h4>
+        <div class="preset-grid" id="presetGrid"></div>
+        <h4>COULEURS <small id="themeName"></small></h4>
+        <div class="color-list" id="colorList"></div>
+        <h4>THÈMES SAUVEGARDÉS</h4>
+        <div class="row">
+          <input type="text" id="themeSaveName" placeholder="Nom du thème" maxlength="32">
+          <button class="btn" id="btnThemeSave">SAVE</button>
+        </div>
+        <div class="custom-list" id="customThemes"></div>
+        <div class="row">
+          <button class="btn ghost" id="btnThemeExport">Copier le JSON</button>
+          <button class="btn ghost" id="btnThemeImport">Importer un JSON</button>
+        </div>
+      </div>
+
+      <!-- Paramètres -->
+      <div class="drawer-body" data-pane="settings">
+        <h4>ENTRÉE AUDIO</h4>
+        <label class="field">Périphérique
+          <span class="row">
+            <select data-setting="deviceId" id="deviceSelect"><option value="">Entrée par défaut</option></select>
+            <button class="icon-btn" id="btnDevices" title="Actualiser la liste">↻</button>
+          </span>
+        </label>
+        <label class="check"><input type="checkbox" data-setting="rawInput"> Signal brut (sans réduction de bruit / AGC)</label>
+        <label class="field">FFT size
+          <select data-setting="fftSize">
+            <option value="1024">1024</option><option value="2048">2048</option><option value="4096">4096</option>
+            <option value="8192">8192</option><option value="16384">16384</option>
+          </select>
+        </label>
+        <label class="field">Lissage (smoothing) <output data-for="smoothing"></output>
+          <input type="range" min="0" max="0.95" step="0.05" data-setting="smoothing">
+        </label>
+        <label class="field">Plancher (dB) <output data-for="minDb"></output>
+          <input type="range" min="-130" max="-50" step="1" data-setting="minDb">
+        </label>
+        <label class="field">Plafond (dB) <output data-for="maxDb"></output>
+          <input type="range" min="-40" max="0" step="1" data-setting="maxDb">
+        </label>
+
+        <h4>ZONES DE FRÉQUENCES (Hz)</h4>
+        <div class="grid2">
+          <label class="field">Min<input type="number" min="10" max="200" step="1" data-setting="freqMin"></label>
+          <label class="field">Graves → médiums<input type="number" min="40" max="2000" step="10" data-setting="bassMax"></label>
+          <label class="field">Médiums → aigus<input type="number" min="500" max="16000" step="50" data-setting="midMax"></label>
+          <label class="field">Max<input type="number" min="2000" max="24000" step="100" data-setting="freqMax"></label>
+        </div>
+
+        <h4>VISUALISATION</h4>
+        <label class="field">Qualité graphique
+          <select data-setting="quality"><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>ULTRA</option></select>
+        </label>
+        <label class="field">Fenêtre 3D (zoom temporel)
+          <select data-setting="window3d">
+            <option value="5">5 s</option><option value="10">10 s</option><option value="20">20 s</option>
+            <option value="30">30 s</option><option value="60">60 s</option>
+          </select>
+        </label>
+        <label class="field">Échelle de hauteur <output data-for="heightScale"></output>
+          <input type="range" min="0.3" max="2" step="0.05" data-setting="heightScale">
+        </label>
+        <label class="check"><input type="checkbox" data-setting="wireframe"> Maillage filaire</label>
+        <label class="check"><input type="checkbox" data-setting="contours"> Lignes de niveau</label>
+        <label class="check"><input type="checkbox" data-setting="showLabels"> Repères et libellés 3D</label>
+        <label class="check"><input type="checkbox" data-setting="hudVisible"> HUD de mesures (H)</label>
+
+        <h4>TRAÎNÉES</h4>
+        <label class="field">Mode
+          <select data-setting="trailMode">
+            <option value="none">Aucune</option><option value="low">Faible</option><option value="medium">Moyenne</option>
+            <option value="high">Forte</option><option value="persistent">Persistante</option>
+          </select>
+        </label>
+        <label class="field">Longueur <output data-for="trailLength"></output>
+          <input type="range" min="0.5" max="60" step="0.5" data-setting="trailLength">
+        </label>
+
+        <h4>PICS</h4>
+        <label class="field">Seuil de détection <output data-for="peakThreshold"></output>
+          <input type="range" min="0.2" max="0.98" step="0.01" data-setting="peakThreshold">
+        </label>
+
+        <h4>HISTORIQUE</h4>
+        <label class="field">Durée conservée
+          <select data-setting="retention">
+            <option value="30">30 secondes</option><option value="60">1 minute</option>
+            <option value="300">5 minutes</option><option value="600">10 minutes</option>
+          </select>
+        </label>
+        <label class="field">Résolution (tranches / s)
+          <select data-setting="historyRate"><option value="20">20</option><option value="30">30</option><option value="60">60</option></select>
+        </label>
+        <div class="kv"><span>MÉMOIRE</span><b id="histMem">—</b></div>
+        <div class="kv"><span>ENREGISTRÉ</span><b id="histLen">—</b></div>
+        <button class="btn ghost" id="btnClearHistory">Effacer l'historique</button>
+
+        <h4>CAMÉRA</h4>
+        <label class="check"><input type="checkbox" data-setting="autoRotate"> Rotation automatique</label>
+        <label class="field">Vitesse de rotation <output data-for="autoRotateSpeed"></output>
+          <input type="range" min="0.02" max="0.6" step="0.01" data-setting="autoRotateSpeed">
+        </label>
+
+        <h4>SERVEUR</h4>
+        <label class="field">Source
+          <select data-setting="serverSource">
+            <option value="simulated">Simulation</option><option value="websocket">WebSocket</option>
+            <option value="http">API locale (HTTP)</option><option value="json">Fichier JSON</option><option value="off">Désactivé</option>
+          </select>
+        </label>
+        <label class="field">Adresse
+          <input type="text" data-setting="serverUrl" spellcheck="false" placeholder="ws://localhost:8765">
+        </label>
+        <label class="field">Intervalle d'interrogation (ms)
+          <input type="number" min="250" max="60000" step="250" data-setting="serverInterval">
+        </label>
+        <button class="btn" id="btnServerConnect">CONNECT</button>
+        <p class="note">Exemples : <code>ws://localhost:8765</code> · <code>http://localhost:8080/api/status</code> ·
+          <code>./server-status.example.json</code>. Format décrit dans le README.</p>
+
+        <h4>RACCOURCIS</h4>
+        <dl class="shortcuts">
+          <dt>Espace</dt><dd>Lecture / pause</dd>
+          <dt>L</dt><dd>Retour au direct</dd>
+          <dt>← / →</dt><dd>Reculer / avancer 1 s (Maj : 5 s)</dd>
+          <dt>J / K</dt><dd>Retour arrière / avance rapide</dd>
+          <dt>[ / ]</dt><dd>Vitesse de lecture</dd>
+          <dt>1 2 3 4 / R</dt><dd>Vues TOP · FRONT · SIDE · 3D / reset</dd>
+          <dt>A</dt><dd>Rotation automatique</dd>
+          <dt>T</dt><dd>Mode de traînée suivant</dd>
+          <dt>H · B · C · S</dt><dd>HUD · panneau · couleurs · paramètres</dd>
+          <dt>F</dt><dd>Plein écran</dd>
+        </dl>
+        <button class="btn ghost danger" id="btnResetSettings">Réinitialiser tous les paramètres</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- =============================== TIMELINE ================================ -->
+  <section class="timeline-bar">
+    <div class="tl-head">
+      <span>TIMELINE</span>
+      <span class="tl-range" id="tlRange">—</span>
+    </div>
+    <div class="tl-wrap">
+      <canvas id="timeline" class="timeline" title="Cliquer/glisser : naviguer · molette : zoom · Maj+molette : défiler · double-clic : direct"></canvas>
+    </div>
+  </section>
+
+  <!-- ============================ BARRE D'OUTILS ============================= -->
+  <footer class="toolbar">
+    <div class="tgroup transport">
+      <button id="btnBack" title="Reculer de 5 s (Maj+←)">⏮</button>
+      <button id="btnRewind" title="Retour arrière (J)">◀◀</button>
+      <button id="btnPlay" class="primary" title="Lecture / pause (Espace)"><span id="playIcon">❚❚</span><span id="playLabel">PAUSE</span></button>
+      <button id="btnForward" title="Avance rapide (K)">▶▶</button>
+      <button id="btnFwdStep" title="Avancer de 5 s (Maj+→)">⏭</button>
+      <button id="btnLive" class="live" title="Retour au direct (L)"><span class="live-dot"></span>LIVE</button>
+    </div>
+    <div class="tgroup">
+      <label>SPEED
+        <select data-setting="playbackSpeed" id="speedSelect">
+          <option value="-4">−4×</option><option value="-2">−2×</option><option value="-1">−1×</option><option value="-0.5">−0.5×</option>
+          <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
+        </select>
+      </label>
+      <label>ZOOM
+        <select data-setting="timelineZoom" title="Zoom temporel de la timeline">
+          <option value="10">10 s</option><option value="30">30 s</option><option value="60">1 min</option><option value="120">2 min</option>
+          <option value="300">5 min</option><option value="600">10 min</option><option value="0">Tout</option>
+        </select>
+      </label>
+      <label class="hide-md">3D
+        <select data-setting="window3d" title="Durée affichée sur le terrain 3D">
+          <option value="5">5 s</option><option value="10">10 s</option><option value="20">20 s</option><option value="30">30 s</option><option value="60">60 s</option>
+        </select>
+      </label>
+    </div>
+    <div class="tgroup">
+      <label>TRAILS
+        <select data-setting="trailMode">
+          <option value="none">NONE</option><option value="low">LOW</option><option value="medium">MEDIUM</option>
+          <option value="high">HIGH</option><option value="persistent">PERSIST</option>
+        </select>
+      </label>
+      <input type="range" class="hide-md" min="0.5" max="60" step="0.5" data-setting="trailLength" title="Longueur de la traînée">
+      <output class="hide-md" data-for="trailLength"></output>
+    </div>
+    <div class="tgroup">
+      <label>QUALITY
+        <select data-setting="quality"><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>ULTRA</option></select>
+      </label>
+      <button id="btnCamera" title="Vue caméra suivante (V)">CAMERA <b id="camName">3D</b></button>
+      <button data-drawer="colors" title="Couleurs (C)">COLORS</button>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

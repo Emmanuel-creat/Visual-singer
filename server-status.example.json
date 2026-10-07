@@ -1,0 +1,12 @@
+{
+  "name": "Serveur local",
+  "status": "online",
+  "version": "1.0.0",
+  "motd": "Exemple de fichier de statut",
+  "players": { "online": 12, "max": 50, "list": ["nova", "kai", "lumen"] },
+  "tps": 19.8,
+  "mspt": 21.5,
+  "cpu": 32,
+  "ram": { "used": 4.2, "max": 8 },
+  "uptime": 11820
+}
