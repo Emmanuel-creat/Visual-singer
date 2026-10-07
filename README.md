@@ -37,6 +37,54 @@ Avec un simple `python -m http.server 8080`, l'application fonctionne aussi, mai
 
 Tout est embarqué (Three.js, TensorFlow.js, modèles) : aucun service cloud. Il faut un navigateur récent compatible WebGL2 (Chrome, Edge ou Firefox).
 
+## Deux applications
+
+| Page | Lanceur | Usage |
+|------|---------|-------|
+| `index.html` — **Détecteur** | `start.bat` | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
+| `sommeil.html` — **Sommeil** | `start-sommeil.bat` | surveillance acoustique de la nuit, statistiques, interprétations, historique |
+
+Les deux partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. Un lien dans la barre du haut permet de passer de l'une à l'autre.
+
+## Application Sommeil
+
+Lancer `start-sommeil.bat`, cliquer sur **Démarrer la nuit** et laisser l'onglet ouvert, ordinateur branché. L'écran reste allumé ; le **Mode nuit** affiche un écran noir avec une horloge discrète. Le matin, cliquer sur **Terminer la nuit**.
+
+Chaque seconde, le son est classé par YAMNet. Le moteur reconstitue ensuite les épisodes, le niveau sonore et le rythme respiratoire :
+
+| Détection | Comment |
+|-----------|---------|
+| Sommeil / éveil, endormissement, réveil | « actigraphie acoustique » : activité par minute (mouvements, paroles, toux…) lissée sur les minutes voisines ; le ronflement sans agitation compte comme sommeil |
+| Ronflements | nombre, épisodes, % du temps de sommeil, intensité, répartition heure par heure |
+| Respiration | rythme (respirations/min) et régularité, estimés par autocorrélation de l'enveloppe sonore quand la respiration est audible |
+| Pauses respiratoires suspectes | silence respiratoire ≥ 10 s pendant un ronflement ou une respiration audible, puis reprise (ronflement, halètement, reniflement) |
+| Toux, éternuements, paroles, gémissements | épisodes horodatés et nombre d'occurrences |
+| Mâchoire / grincement | bruits de mastication ou de claquement assez audibles |
+| Mouvements dans le lit | froissements, grincements, chocs sourds |
+| Environnement | portes, circulation, voix, animaux, télévision… avec le niveau ambiant L90 / L50 / L10 |
+
+Onglets :
+- **Nuit en cours** : compteurs en direct, niveau sonore, derniers événements, chronologie qui se construit.
+- **Résumé** : durée de sommeil, indicateurs, hypnogramme, heure par heure et **interprétation** rédigée, comparée aux autres nuits.
+- **Chronologie** : carte de la nuit, une ligne par type d'événement. Molette pour zoomer, glisser pour se déplacer, clic pour écouter.
+- **Ronflements & respiration** : graphiques et liste des pauses avec leurs extraits.
+- **Événements** : tableau filtrable avec lecture des extraits.
+- **Environnement** : niveaux, types de bruits, bruits les plus forts, bruits suivis d'un réveil.
+- **Historique** : toutes les nuits, évolution d'un indicateur, comparaison de deux nuits.
+
+Seuls de courts extraits WAV des événements sont gardés (25 par type par défaut, réglable), jamais la nuit entière. Pour découvrir l'interface sans attendre une nuit : **Historique → Charger 7 nuits de démonstration** (données fictives, jamais sauvegardées).
+
+```text
+Bureau/Visual Singer/sommeil/
+  2026-10-07_23h12/night.json        données complètes de la nuit
+  2026-10-07_23h12/summary.json      résumé
+  2026-10-07_23h12/extraits/*.wav    extraits des événements
+  historique.csv                     une ligne par nuit (Excel)
+  _corbeille/                        nuits supprimées depuis l'Historique
+```
+
+> Les mesures sont acoustiques et estimées : ce n'est pas une polysomnographie.
+
 ## Identification des sons
 
 Toutes les 1,5 s, les 3 dernières secondes de son sont analysées par deux réseaux de neurones exécutés dans le navigateur :
@@ -139,6 +187,16 @@ models/yamnet/          YAMNet TFJS + liste des 521 classes
 models/birdnet/         BirdNET v2.4 TFJS, libellés FR/EN, modèle géographique (mdata)
 js/settings.js          paramètres centralisés et persistés
 js/utils.js             outils partagés
+js/icons.js             icônes SVG « verre sombre » (tuile, forme givrée, accent lumineux)
+sommeil.html            application Sommeil
+css/sommeil.css         styles de l'application Sommeil
+js/sleep/monitor.js     surveillance de la nuit (classification, épisodes, pauses, respiration)
+js/sleep/analysis.js    sommeil/éveil, statistiques, interprétations, comparaisons
+js/sleep/charts.js      graphiques Canvas (courbes, barres, chronologie zoomable)
+js/sleep/app.js         interface et onglets
+js/sleep/categories.js  catégories nocturnes ↔ classes YAMNet
+js/sleep/store.js       nuits sur le Bureau (via server.py)
+js/sleep/demo.js        générateur de nuits de démonstration
 vendor/three.module.min.js   Three.js r169 (MIT)
 vendor/tf.min.js             TensorFlow.js 4.22 (Apache 2.0)
 ```

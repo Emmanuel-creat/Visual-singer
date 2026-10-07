@@ -27,7 +27,7 @@ const SILENCE_DB = -62;      // en dessous : pas d'analyse
 
 /** Charge TensorFlow.js (script global) une seule fois. */
 let tfPromise = null;
-function loadTf() {
+export function loadTf() {
   if (window.tf) return Promise.resolve(window.tf);
   tfPromise ??= new Promise((resolve, reject) => {
     const s = document.createElement('script');
@@ -395,7 +395,7 @@ function splitLabel(l) {
   return i < 0 ? [l, l] : [l.slice(0, i), l.slice(i + 1)];
 }
 
-function parseClassMap(csv) {
+export function parseClassMap(csv) {
   const names = [];
   for (const line of csv.split(/\r?\n/).slice(1)) {
     if (!line.trim()) continue;

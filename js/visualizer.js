@@ -17,6 +17,7 @@ import { OrbitCamera } from './orbit.js';
 import { BANDS } from './audio.js';
 import { clamp, damp, formatClock, formatFreq, hexToRgb } from './utils.js';
 import { CATEGORIES } from './sound-labels.js';
+import { icon } from './icons.js';
 
 export const W = 36;   // largeur (temps)
 export const D = 26;   // profondeur (fréquence)
@@ -550,7 +551,12 @@ export class Visualizer {
         lbl.visible = true;
         lbl.pos.set((x0 + x1) / 2, y + 0.25, z);
         const c = CATEGORIES[d.category] || CATEGORIES.other;
-        this.labels.text(lbl, `${c.icon} ${d.label} · ${Math.round(d.confidence * 100)}%`);
+        const t = `${d.label} · ${Math.round(d.confidence * 100)}%`;
+        if (lbl.text !== t) {
+          lbl.text = t;
+          lbl.div.innerHTML = icon(c.icon, c.color);
+          lbl.div.append(` ${t}`);
+        }
         lbl.div.style.setProperty('--cat', c.color);
         lbl.div.style.opacity = a < 1 ? '0.5' : '1';
       }

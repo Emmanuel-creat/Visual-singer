@@ -8,6 +8,7 @@ import { COLOR_KEYS, PRESETS } from './theme.js';
 import { TRAIL_MODES } from './visualizer.js';
 import { SPEEDS } from './transport.js';
 import { clamp, formatClock, formatFreq, formatOffset, noteName, hexToRgb } from './utils.js';
+import { icon } from './icons.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -139,7 +140,7 @@ export class UI {
   onTransport() {
     const t = this.transport;
     const playing = t.mode === 'playing';
-    $('#playIcon').textContent = playing || t.isLive ? '❚❚' : '▶';
+    $('#playIcon').innerHTML = icon(playing || t.isLive ? 'pauseBtn' : 'play', '#fff', { tile: false });
     $('#playLabel').textContent = playing || t.isLive ? 'PAUSE' : 'PLAY';
     $('#btnLive').classList.toggle('on', t.isLive);
     $('#btnRewind').classList.toggle('on', playing && t.speed < 0);
@@ -256,7 +257,7 @@ export class UI {
     } else {
       $('#btnMicLabel').textContent = 'CONNECT MICROPHONE';
       if (state === 'requesting') { status.textContent = '◌ EN ATTENTE D\'AUTORISATION…'; dot.classList.add('warn'); }
-      else if (state === 'error') { status.textContent = `✕ ${a.error?.title?.toUpperCase() || 'ERREUR'}`; status.classList.add('err'); dot.classList.add('err'); }
+      else if (state === 'error') { status.textContent = a.error?.title?.toUpperCase() || 'ERREUR'; status.classList.add('err'); dot.classList.add('err'); }
       else status.textContent = '○ MICROPHONE OFF';
       tb.textContent = state === 'error' ? 'ERROR' : 'OFFLINE';
       tb.dataset.state = state === 'error' ? 'error' : 'off';
@@ -354,7 +355,7 @@ export class UI {
       const row = document.createElement('div');
       row.className = 'ct';
       const c = th.custom[name];
-      row.innerHTML = `<button class="btn ghost"><span class="swatches" style="width:3rem">${['bass', 'mid', 'treble'].map((k) => `<i style="background:${c[k]}"></i>`).join('')}</span></button><button class="icon-btn" title="Supprimer">✕</button>`;
+      row.innerHTML = `<button class="btn ghost"><span class="swatches" style="width:3rem">${['bass', 'mid', 'treble'].map((k) => `<i style="background:${c[k]}"></i>`).join('')}</span></button><button class="icon-btn" title="Supprimer">${icon('close', 'var(--err)', { tile: false })}</button>`;
       row.children[0].append(name);
       row.children[0].addEventListener('click', () => th.apply(name));
       row.children[1].addEventListener('click', () => th.deleteCustom(name));

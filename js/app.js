@@ -23,9 +23,11 @@ import { Recognizer } from './recognizer.js';
 import { IdentifyPanel } from './identify-panel.js';
 import { DesktopStore } from './persist.js';
 import { CATEGORIES } from './sound-labels.js';
+import { icon, hydrateIcons } from './icons.js';
 import { clamp, damp, debounce } from './utils.js';
 
 async function boot() {
+  hydrateIcons();
   // Sauvegarde sur le Bureau (si l'appli est servie par server.py).
   const store = new DesktopStore();
   await store.init();
@@ -108,7 +110,12 @@ async function boot() {
   setInterval(() => {
     const d = identify.currentSource();
     const c = d && CATEGORIES[d.category];
-    hudSrc.textContent = d ? `${c.icon} ${d.label}` : recognizer.running ? '…' : '—';
+    const txt = d ? d.label : recognizer.running ? '…' : '—';
+    if (hudSrc.dataset.txt !== txt) {
+      hudSrc.dataset.txt = txt;
+      hudSrc.innerHTML = d ? `${icon(c.icon, c.color)} ` : '';
+      hudSrc.append(txt);
+    }
     hudSrc.style.setProperty('--src', c ? c.color : '');
     hudSrcConf.textContent = d ? `${Math.round(d.confidence * 100)}%` : '';
   }, 250);

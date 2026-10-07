@@ -204,7 +204,7 @@ export class Timeline extends Emitter {
         ctx.save();
         ctx.beginPath(); ctx.rect(x0, gy1 - 14, x1 - x0, 13); ctx.clip();
         ctx.fillStyle = c.text;
-        ctx.fillText(`${(CATEGORIES[d.category] || CATEGORIES.other).icon} ${d.label}`, x0 + 4, gy1 - 8);
+        ctx.fillText(d.label, x0 + 4, gy1 - 8);
         ctx.restore();
       }
     }

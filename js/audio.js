@@ -78,7 +78,7 @@ export class AudioEngine extends Emitter {
       this.input.connect(this.analyser);
       this.analyser.connect(silent).connect(this.ctx.destination);
       this._applyAnalyserSettings();
-      this.ring = new Float32Array(Math.ceil(this.ctx.sampleRate * 8));
+      this.ring = new Float32Array(Math.ceil(this.ctx.sampleRate * 30));
       try {
         await this.ctx.audioWorklet.addModule(new URL('./capture-worklet.js', import.meta.url));
         this.tap = new AudioWorkletNode(this.ctx, 'vs-capture', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1, channelCountMode: 'explicit' });
@@ -102,6 +102,7 @@ export class AudioEngine extends Emitter {
     this.ringPos = (this.ringPos + n) % r.length;
     this.ringFilled = Math.min(r.length, this.ringFilled + n);
     this.lastBlockAt = performance.now();
+    this.emit('block', block);
   }
 
   /** Copie des `seconds` dernières secondes de signal brut (null si pas assez de données). */

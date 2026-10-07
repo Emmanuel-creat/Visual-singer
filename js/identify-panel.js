@@ -4,6 +4,7 @@
  */
 import { CATEGORIES } from './sound-labels.js';
 import { formatClock } from './utils.js';
+import { icon } from './icons.js';
 
 const $ = (sel) => document.querySelector(sel);
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -27,7 +28,7 @@ export class IdentifyPanel {
     const box = $('#catRows');
     box.innerHTML = Object.entries(CATEGORIES).map(([k, c]) => `
       <div class="cat-row" data-cat="${k}" style="--cat:${c.color}">
-        <span class="ci">${c.icon}</span><span class="cl">${c.label}</span>
+        <span class="ci">${icon(c.icon, c.color)}</span><span class="cl">${c.label}</span>
         <div class="bar"><i></i></div><b>0%</b>
       </div>`).join('');
   }
@@ -86,8 +87,10 @@ export class IdentifyPanel {
       prog.querySelector('span').textContent = message;
     }
     btn.disabled = state === 'loading';
-    btn.textContent = state === 'loading' ? 'CHARGEMENT DES MODÈLES…'
-      : isRunning ? '❚❚ METTRE EN PAUSE' : state === 'error' ? '↻ RÉESSAYER' : "▶ ACTIVER L'IDENTIFICATION";
+    btn.innerHTML = state === 'loading' ? 'CHARGEMENT DES MODÈLES…'
+      : isRunning ? `${icon('pauseBtn', 'var(--accent)', { tile: false })} METTRE EN PAUSE`
+      : state === 'error' ? `${icon('refresh', 'var(--accent)', { tile: false })} RÉESSAYER`
+      : `${icon('play', 'var(--accent)', { tile: false })} ACTIVER L'IDENTIFICATION`;
     if (state === 'error') { $('#idName').textContent = 'Modèles indisponibles'; $('#idSci').textContent = message; }
   }
 
@@ -100,7 +103,7 @@ export class IdentifyPanel {
     }
     const alts = [...(res.bird || []).filter((b) => !b.special).slice(0, 2), ...(res.top || []).slice(0, 3)];
     $('#idAlt').innerHTML = res.silent ? '<span class="muted">Silence</span>'
-      : alts.map((c) => `<span class="chip" style="--cat:${CATEGORIES[c.category].color}">${CATEGORIES[c.category].icon} ${esc(c.label)} <b>${pct(c.score)}</b></span>`).join('');
+      : alts.map((c) => `<span class="chip" style="--cat:${CATEGORIES[c.category].color}">${icon(CATEGORIES[c.category].icon, CATEGORIES[c.category].color)} ${esc(c.label)} <b>${pct(c.score)}</b></span>`).join('');
     this._renderMain();
   }
 
@@ -117,7 +120,7 @@ export class IdentifyPanel {
       const c = CATEGORIES[d.category];
       main.dataset.cat = d.category;
       main.style.setProperty('--cat', c.color);
-      $('#idIcon').textContent = c.icon;
+      $('#idIcon').innerHTML = icon(c.icon, c.color);
       $('#idName').textContent = d.label;
       $('#idSci').textContent = d.sci ? d.sci : `${c.label}${d.en && d.en !== d.label ? ` · ${d.en}` : ''}`;
       $('#idConf').textContent = pct(d.confidence);
@@ -126,7 +129,7 @@ export class IdentifyPanel {
     main.dataset.cat = '';
     main.style.removeProperty('--cat');
     const res = this.rec.current;
-    $('#idIcon').textContent = '◌';
+    $('#idIcon').innerHTML = icon('wave', 'rgba(228,228,231,0.35)');
     $('#idConf').textContent = '';
     if (this.rec.state !== 'ready' || !this.rec.running) {
       if (this.rec.state !== 'error') { $('#idName').textContent = 'Identification inactive'; $('#idSci').textContent = 'Connectez le micro puis activez-la'; }
@@ -153,7 +156,7 @@ export class IdentifyPanel {
       const when = isPast ? (d.heure || '') : formatClock(d.start, 0);
       const dur = isPast ? d.duration : d.end - d.start;
       return `<li ${isPast ? 'class="past" title="Session précédente"' : `data-start="${d.start}" title="Revoir cet instant"`} style="--cat:${c.color}">
-        <span class="di">${c.icon}</span>
+        <span class="di">${icon(c.icon, c.color)}</span>
         <span class="dn"><b>${esc(d.label)}</b><small>${esc(d.sci || c.label)}</small></span>
         <span class="dm"><b>${pct(d.confidence)}</b><small>${when} · ${Math.max(1, Math.round(dur))} s</small></span>
         ${d.open ? '<span class="live-pip"></span>' : ''}

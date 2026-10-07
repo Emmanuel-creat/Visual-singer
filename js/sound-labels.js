@@ -6,12 +6,12 @@
  */
 
 export const CATEGORIES = {
-  bird:   { label: 'Oiseau',        icon: '🐦', color: '#7ee08a' },
-  animal: { label: 'Animal',        icon: '🐾', color: '#c79bf2' },
-  human:  { label: 'Humain',        icon: '🧑', color: '#f2b45a' },
-  music:  { label: 'Musique',       icon: '🎵', color: '#7cc4ff' },
-  nature: { label: 'Nature',        icon: '🌿', color: '#5ad2c0' },
-  other:  { label: 'Environnement', icon: '🔊', color: '#a3a4aa' },
+  bird:   { label: 'Oiseau',        icon: 'bird', color: '#7ee08a' },
+  animal: { label: 'Animal',        icon: 'animal', color: '#c79bf2' },
+  human:  { label: 'Humain',        icon: 'human', color: '#f2b45a' },
+  music:  { label: 'Musique',       icon: 'music', color: '#7cc4ff' },
+  nature: { label: 'Nature',        icon: 'nature', color: '#5ad2c0' },
+  other:  { label: 'Environnement', icon: 'other', color: '#a3a4aa' },
 };
 
 /** Catégorie d'une classe YAMNet d'après son indice. */

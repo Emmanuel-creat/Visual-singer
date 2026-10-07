@@ -745,3 +745,28 @@ input[type="range"] { accent-color: var(--accent); width: 100%; }
   display: grid; place-items: center; border-radius: var(--radius); font-weight: 600;
   border: 2px dashed var(--accent); background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
+
+.app-link { text-decoration: none; color: var(--muted); box-shadow: none; }
+
+/* ------------------------------------------------------------ Icônes verre */
+.gi { display: inline-block; width: 1.2em; height: 1.2em; vertical-align: -0.25em; overflow: visible; flex: none; }
+.gi-tile { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45)); }
+.gi-slot { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+/* Conteneurs dédiés : la tuile remplit tout l'espace, sans cadre supplémentaire. */
+.brand-mark, .id-icon, .card-icon, .btn-mic .ico, .rec-ico, .counter .ci, .det-list .di, .feed .fi,
+.selected-event .se-cat, .interp-item .ii, .cat-row .ci {
+  background: none !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important;
+}
+.brand-mark > .gi, .id-icon > .gi, .card-icon > .gi, .btn-mic .ico > .gi, .rec-ico > .gi, .counter .ci > .gi,
+.det-list .di > .gi, .feed .fi > .gi, .selected-event .se-cat > .gi, .interp-item .ii > .gi, .cat-row .ci > .gi {
+  width: 100%; height: 100%;
+}
+.cat-row .ci { width: 1.25rem; height: 1.25rem; }
+.btn-mic .ico { width: 1.9rem; height: 1.9rem; }
+.btn-mic.big .ico { width: 2.2rem; height: 2.2rem; }
+.btn .gi, .toolbar .gi, .cam-bar .gi, .icon-btn .gi { width: 1.25em; height: 1.25em; }
+.transport button .gi { width: 1.7em; height: 1.7em; }
+.icon-btn .gi { width: 1.05rem; height: 1.05rem; }
+.card-icon { width: 4.4rem !important; height: 4.4rem !important; }
+.hud-row.source .v .gi, .lbl.det-tag .gi { width: 1.35em; height: 1.35em; vertical-align: -0.35em; }
+.chip .gi { width: 1.3em; height: 1.3em; vertical-align: -0.35em; }
