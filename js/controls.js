@@ -20,6 +20,8 @@ const FORMATS = {
   trailLength: (v) => `${v} s`,
   peakThreshold: (v) => `${Math.round(v * 100)}%`,
   autoRotateSpeed: (v) => v.toFixed(2),
+  soundMinConf: (v) => `${Math.round(v * 100)}%`,
+  birdMinConf: (v) => `${Math.round(v * 100)}%`,
 };
 const VIEW_CYCLE = ['3D', 'TOP', 'FRONT', 'SIDE'];
 
@@ -188,6 +190,21 @@ export class UI {
     $('#btnMic').addEventListener('click', toggle);
     for (const b of $$('[data-action="mic"]')) b.addEventListener('click', () => this.audio.connectMicrophone());
     for (const b of $$('[data-action="demo"]')) b.addEventListener('click', () => this.audio.startDemo());
+    // Fichier audio : bouton ou glisser-déposer sur la vue 3D.
+    const fileInput = $('#fileInput');
+    const pick = () => fileInput.click();
+    $('#btnFile').addEventListener('click', pick);
+    for (const b of $$('[data-action="file"]')) b.addEventListener('click', pick);
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) this.audio.playFile(fileInput.files[0]); fileInput.value = ''; });
+    const vp = $('#viewport');
+    vp.addEventListener('dragover', (e) => { e.preventDefault(); vp.classList.add('drop-target'); });
+    vp.addEventListener('dragleave', () => vp.classList.remove('drop-target'));
+    vp.addEventListener('drop', (e) => {
+      e.preventDefault();
+      vp.classList.remove('drop-target');
+      const f = e.dataTransfer.files[0];
+      if (f) this.audio.playFile(f);
+    });
     $('#btnDevices').addEventListener('click', () => this.refreshDevices());
     this.audio.on('state', (e) => this.onAudioState(e));
     this.audio.on('devices', (list) => this._fillDevices(list));
@@ -229,12 +246,12 @@ export class UI {
     dot.className = 'dot';
     status.className = 'mic-status';
     if (state === 'active') {
-      const demo = a.source === 'demo';
-      $('#btnMicLabel').textContent = demo ? 'STOP DEMO' : 'DISCONNECT';
-      status.textContent = demo ? '● DEMO SIGNAL ACTIVE' : '● MICROPHONE ACTIVE';
+      const demo = a.source === 'demo' || a.source === 'file';
+      $('#btnMicLabel').textContent = a.source === 'file' ? 'STOP FILE' : demo ? 'STOP DEMO' : 'DISCONNECT';
+      status.textContent = a.source === 'file' ? '● FICHIER EN LECTURE' : demo ? '● DEMO SIGNAL ACTIVE' : '● MICROPHONE ACTIVE';
       status.classList.add(demo ? 'demo' : 'on');
       dot.classList.add(demo ? 'demo' : 'on');
-      tb.textContent = demo ? 'DEMO' : 'LIVE';
+      tb.textContent = a.source === 'file' ? 'FILE' : demo ? 'DEMO' : 'LIVE';
       tb.dataset.state = demo ? 'demo' : 'on';
     } else {
       $('#btnMicLabel').textContent = 'CONNECT MICROPHONE';

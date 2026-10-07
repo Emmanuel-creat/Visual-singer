@@ -1,5 +1,5 @@
 @echo off
 cd /d "%~dp0"
-echo Visual Singer : http://localhost:8080
-start "" http://localhost:8080
-python -m http.server 8080
+echo Visual Singer - les sauvegardes vont dans "Bureau\Visual Singer"
+python server.py
+if errorlevel 1 pause

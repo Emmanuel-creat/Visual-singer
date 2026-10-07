@@ -10,6 +10,7 @@
  *   double-clic          → retour au direct
  */
 import { Emitter, clamp, formatClock, formatOffset, hexToRgb } from './utils.js';
+import { CATEGORIES } from './sound-labels.js';
 
 export const TIMELINE_ZOOMS = [10, 30, 60, 120, 300, 600, 0]; // 0 = tout l'historique
 
@@ -29,6 +30,7 @@ export class Timeline extends Emitter {
     this.dragging = false;
     this.hoverX = -1;
     this.trail = [];          // positions récentes du curseur { t, at }
+    this.detections = [];     // sons identifiés (partagé avec le module de reconnaissance)
     this.w = 0; this.h = 0;
     this._bind();
     new ResizeObserver(() => this._resize()).observe(canvas);
@@ -185,6 +187,27 @@ export class Timeline extends Emitter {
       ctx.fillRect(x - 0.5, gy0, 1, gh);
     }
     ctx.globalAlpha = 1;
+
+    // Sons identifiés : bandes colorées par catégorie en bas du graphe.
+    ctx.font = '600 9px "Segoe UI", system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    for (const d of this.detections) {
+      if (d.end < t0 || d.start > t1) continue;
+      const x0 = clamp(this._timeToX(d.start), gx0, gx1), x1 = clamp(this._timeToX(d.end), gx0, gx1);
+      const col = (CATEGORIES[d.category] || CATEGORIES.other).color;
+      ctx.fillStyle = rgba(col, 0.22);
+      ctx.fillRect(x0, gy1 - 14, Math.max(2, x1 - x0), 13);
+      ctx.fillStyle = col;
+      ctx.fillRect(x0, gy1 - 3, Math.max(2, x1 - x0), 2);
+      if (x1 - x0 > 46) {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, gy1 - 14, x1 - x0, 13); ctx.clip();
+        ctx.fillStyle = c.text;
+        ctx.fillText(`${(CATEGORIES[d.category] || CATEGORIES.other).icon} ${d.label}`, x0 + 4, gy1 - 8);
+        ctx.restore();
+      }
+    }
 
     // Survol.
     if (this.hoverX >= gx0 && this.hoverX <= gx1 && !this.dragging) {

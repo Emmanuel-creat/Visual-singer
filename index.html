@@ -54,22 +54,25 @@
 
     <!-- ---------- Panneau latéral ---------- -->
     <aside class="sidebar" id="sidebar">
-      <section class="panel">
-        <h3><span class="dot" id="srvDot"></span>SERVER<small id="srvSource">—</small></h3>
-        <div class="kv"><span>NAME</span><b id="srvName">—</b></div>
-        <div class="kv"><span>VERSION</span><b id="srvVersion">—</b></div>
-        <div class="kv"><span>UPTIME</span><b id="srvUptime">—</b></div>
-        <div class="kv"><span>MSPT</span><b id="srvMspt">—</b></div>
-        <div class="spark-row">
-          <div class="spark"><label>TPS</label><canvas id="sparkTps"></canvas></div>
-          <div class="spark"><label>PLAYERS</label><canvas id="sparkPlayers"></canvas></div>
+      <section class="panel id-panel">
+        <h3><span class="dot" id="idDot"></span>IDENTIFICATION<small id="idState">INACTIVE</small></h3>
+        <div class="id-main" id="idMain">
+          <div class="id-icon" id="idIcon">◌</div>
+          <div class="id-text"><b id="idName">Identification inactive</b><span id="idSci">Connectez le micro puis activez-la</span></div>
+          <div class="id-conf" id="idConf"></div>
         </div>
-        <div class="srv-msg" id="srvMsg"></div>
+        <div class="id-progress" id="idProgress" hidden><div class="bar"><i></i></div><span></span></div>
+        <div class="cat-rows" id="catRows"></div>
+        <div class="id-alt" id="idAlt"></div>
+        <button class="btn" id="btnRecog">▶ ACTIVER L'IDENTIFICATION</button>
       </section>
+
 
       <section class="panel">
         <h3><span class="dot" id="micDot"></span>MICROPHONE</h3>
         <button class="btn-mic" id="btnMic"><span class="ico">🎙</span><span id="btnMicLabel">CONNECT MICROPHONE</span></button>
+        <button class="btn ghost file-btn" id="btnFile" title="Analyser un enregistrement (ou glisser-déposer un fichier sur la vue 3D)">📂 Analyser un fichier audio</button>
+        <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a" hidden>
         <div class="mic-status" id="micStatus">○ MICROPHONE OFF</div>
         <div class="meter" title="Niveau du signal d'entrée (RMS / crête)">
           <div class="meter-scale"></div>
@@ -95,8 +98,24 @@
       </section>
 
       <section class="panel grow">
-        <h3>PEAKS<small id="peakCount">0</small></h3>
-        <ul class="peak-list" id="peakList"><li class="empty">Aucun pic détecté</li></ul>
+        <h3 class="tabs">
+          <button data-tab="det" class="on">DÉTECTIONS <small id="detCount">0</small></button>
+          <button data-tab="peaks">PICS <small id="peakCount">0</small></button>
+        </h3>
+        <ul class="det-list" id="detList" data-tab-pane="det"><li class="empty">Aucune détection pour l’instant</li></ul>
+        <ul class="peak-list" id="peakList" data-tab-pane="peaks" hidden><li class="empty">Aucun pic détecté</li></ul>
+      </section>
+      <section class="panel">
+        <h3><span class="dot" id="srvDot"></span>SERVER<small id="srvSource">—</small></h3>
+        <div class="kv"><span>NAME</span><b id="srvName">—</b></div>
+        <div class="kv"><span>VERSION</span><b id="srvVersion">—</b></div>
+        <div class="kv"><span>UPTIME</span><b id="srvUptime">—</b></div>
+        <div class="kv"><span>MSPT</span><b id="srvMspt">—</b></div>
+        <div class="spark-row">
+          <div class="spark"><label>TPS</label><canvas id="sparkTps"></canvas></div>
+          <div class="spark"><label>PLAYERS</label><canvas id="sparkPlayers"></canvas></div>
+        </div>
+        <div class="srv-msg" id="srvMsg"></div>
       </section>
     </aside>
 
@@ -113,6 +132,9 @@
         <div class="hud-bar"><i id="hudIntBar"></i></div>
         <div class="hud-row">
           <span class="k">DOM FREQ</span><span class="v" id="hudFreq">—</span><span class="u" id="hudNote"></span>
+        </div>
+        <div class="hud-row source">
+          <span class="k">SOURCE</span><span class="v" id="hudSrc">—</span><span class="u" id="hudSrcConf"></span>
         </div>
         <div class="hud-zones">
           <div class="hz" data-zone="bass"><div class="hz-bar"><i id="hzBass"></i></div><span>BASS</span><b id="hzBassV">0</b></div>
@@ -153,6 +175,7 @@
             Les données restent sur cet ordinateur : rien n'est envoyé sur Internet.</p>
           <button class="btn-mic big" data-action="mic"><span class="ico">🎙</span>CONNECT MICROPHONE</button>
           <button class="btn ghost" data-action="demo">▶ Lancer le signal de démonstration</button>
+          <button class="btn ghost" data-action="file">📂 Analyser un fichier audio</button>
         </div>
         <div class="card wait-card">
           <div class="spinner"></div>
@@ -231,6 +254,33 @@
           <label class="field">Médiums → aigus<input type="number" min="500" max="16000" step="50" data-setting="midMax"></label>
           <label class="field">Max<input type="number" min="2000" max="24000" step="100" data-setting="freqMax"></label>
         </div>
+
+        <h4>IDENTIFICATION DES SONS</h4>
+        <label class="check"><input type="checkbox" data-setting="recogEnabled"> Activer l'identification (oiseaux, animaux, humains)</label>
+        <label class="field">Fréquence d'analyse
+          <select data-setting="recogInterval"><option value="1">toutes les 1 s</option><option value="1.5">toutes les 1,5 s</option><option value="2">toutes les 2 s</option><option value="3">toutes les 3 s</option></select>
+        </label>
+        <label class="field">Confiance min. — sons, animaux, humains <output data-for="soundMinConf"></output>
+          <input type="range" min="0.1" max="0.9" step="0.05" data-setting="soundMinConf">
+        </label>
+        <label class="field">Confiance min. — espèces d'oiseaux <output data-for="birdMinConf"></output>
+          <input type="range" min="0.1" max="0.95" step="0.05" data-setting="birdMinConf">
+        </label>
+        <label class="check"><input type="checkbox" data-setting="birdAlways"> Toujours chercher l'espèce d'oiseau</label>
+        <label class="check"><input type="checkbox" data-setting="useLocation"> Filtrer les espèces selon ma position et la saison</label>
+        <div class="grid2">
+          <label class="field">Latitude<input type="number" step="0.01" min="-90" max="90" data-setting="latitude"></label>
+          <label class="field">Longitude<input type="number" step="0.01" min="-180" max="180" data-setting="longitude"></label>
+        </div>
+        <button class="btn ghost" id="btnGeo">📍 Utiliser ma position</button>
+        <p class="note" id="geoNote"></p>
+
+        <h4>SAUVEGARDE SUR LE BUREAU</h4>
+        <div class="kv"><span>DOSSIER</span><b id="dataDir" class="ellipsis">—</b></div>
+        <label class="check"><input type="checkbox" data-setting="saveDetections"> Journal des détections (CSV + JSON)</label>
+        <label class="check"><input type="checkbox" data-setting="saveClips"> Extrait audio (.wav) de chaque détection</label>
+        <p class="note" id="storeNote"></p>
+        <p class="note">Modèles locaux : BirdNET v2.4 — K. Lisa Yang Center for Conservation Bioacoustics (Cornell Lab of Ornithology) &amp; TU Chemnitz, licence CC BY-NC-SA 4.0 (usage non commercial) · YAMNet — Google, Apache 2.0.</p>
 
         <h4>VISUALISATION</h4>
         <label class="field">Qualité graphique

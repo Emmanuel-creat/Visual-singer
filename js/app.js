@@ -6,6 +6,8 @@
  *        └─ PeakDetector ──────┘
  *   Transport (curseur temporel) ─▶ quel instant afficher
  *   ServerConnector (indépendant) ─▶ barre supérieure / panneau serveur
+ *   Recognizer (BirdNET + YAMNet) ─▶ IdentifyPanel, 3D, timeline, Bureau
+ *   DesktopStore ─▶ « Bureau/Visual Singer » (via server.py)
  *   UI (controls.js) ─▶ DOM, paramètres, couleurs, raccourcis
  */
 import { Settings } from './settings.js';
@@ -17,11 +19,20 @@ import { Visualizer, TRAIL_MODES } from './visualizer.js';
 import { Timeline } from './timeline.js';
 import { ServerConnector } from './server.js';
 import { UI } from './controls.js';
+import { Recognizer } from './recognizer.js';
+import { IdentifyPanel } from './identify-panel.js';
+import { DesktopStore } from './persist.js';
+import { CATEGORIES } from './sound-labels.js';
 import { clamp, damp, debounce } from './utils.js';
 
-function boot() {
-  const settings = new Settings();
-  const theme = new ThemeManager();
+async function boot() {
+  // Sauvegarde sur le Bureau (si l'appli est servie par server.py).
+  const store = new DesktopStore();
+  await store.init();
+  const saved = await store.loadState();
+
+  const settings = new Settings(saved?.settings);
+  const theme = new ThemeManager(saved);
   const history = new AudioHistory(BANDS, settings.get('retention'), settings.get('historyRate'));
   const audio = new AudioEngine(settings);
   const peaks = new PeakDetector();
@@ -38,6 +49,69 @@ function boot() {
   const timeline = new Timeline(document.getElementById('timeline'), history, transport, settings);
   const server = new ServerConnector(settings);
   const ui = new UI({ settings, theme, audio, history, transport, viz, timeline, server });
+
+  /* ------------------------- Identification des sons ------------------------- */
+
+  let t0 = null; // horloge de session : démarre à la première connexion audio
+  const sessionTime = () => (t0 === null ? 0 : (performance.now() - t0) / 1000);
+  const recognizer = new Recognizer(audio, settings, sessionTime);
+  const identify = new IdentifyPanel({ recognizer, transport, settings, store });
+  viz.setDetections(recognizer.detections);
+  timeline.detections = recognizer.detections;
+
+  // Sauvegarde des réglages et thèmes sur le Bureau.
+  const saveState = () => store.saveState({
+    app: 'Visual Singer', savedAt: new Date().toISOString(),
+    settings: settings.values,
+    theme: { name: theme.presetName, colors: theme.colors },
+    customThemes: theme.custom,
+  });
+  settings.on('change', saveState);
+  theme.on('change', saveState);
+
+  // Chaque détection terminée → journal CSV/JSON + extrait WAV sur le Bureau.
+  recognizer.on('final', async ({ detection: d, audio: samples, sampleRate }) => {
+    if (!store.available || !settings.get('saveDetections')) return;
+    const at = new Date(d.wallTime);
+    const hhmmss = at.toTimeString().slice(0, 8);
+    let clip = '';
+    if (settings.get('saveClips') && samples) {
+      clip = await store.saveClip(`${hhmmss.replace(/:/g, '')}_${CATEGORIES[d.category]?.label || d.category}_${d.label}`, samples, sampleRate);
+    }
+    d.clip = clip;
+    await store.saveDetection({
+      heure: hhmmss, wallTime: d.wallTime,
+      category: d.category, categorie: CATEGORIES[d.category]?.label || d.category,
+      label: d.label, sci: d.sci, en: d.en,
+      confidence: +d.confidence.toFixed(3), duration: +(d.end - d.start + 0.0).toFixed(1), hits: d.hits,
+      source: d.source, clip, alternatives: d.alternatives,
+    });
+  });
+
+  const storeNote = document.getElementById('storeNote');
+  document.getElementById('dataDir').textContent = store.available ? store.dataDir : 'navigateur uniquement';
+  document.getElementById('dataDir').title = store.dataDir;
+  storeNote.textContent = store.available
+    ? 'Les réglages, thèmes, détections et extraits sont enregistrés dans ce dossier.'
+    : "Sauvegarde Bureau indisponible : lancez l'appli avec « python server.py » (ou start.bat) au lieu de « python -m http.server ».";
+  if (store.available) identify.setPast(await store.loadDetections());
+
+  // L'analyse démarre dès que l'audio est actif (si l'option est cochée).
+  audio.on('state', ({ state }) => {
+    if (state === 'active' && settings.get('recogEnabled')) recognizer.start();
+    else if (state !== 'active') recognizer.closeAll();
+  });
+
+  // Source identifiée dans le HUD.
+  const hudSrc = document.getElementById('hudSrc');
+  const hudSrcConf = document.getElementById('hudSrcConf');
+  setInterval(() => {
+    const d = identify.currentSource();
+    const c = d && CATEGORIES[d.category];
+    hudSrc.textContent = d ? `${c.icon} ${d.label}` : recognizer.running ? '…' : '—';
+    hudSrc.style.setProperty('--src', c ? c.color : '');
+    hudSrcConf.textContent = d ? `${Math.round(d.confidence * 100)}%` : '';
+  }, 250);
 
   /* ---------------------------- Réglages → modules ---------------------------- */
 
@@ -87,8 +161,6 @@ function boot() {
     }
   });
 
-  // Horloge de session : démarre à la première connexion audio.
-  let t0 = null;
   audio.on('state', ({ state }) => {
     if (state === 'active' && t0 === null) t0 = performance.now();
     if (state === 'active') peaks.reset();
@@ -160,7 +232,7 @@ function boot() {
   requestAnimationFrame(frame);
 
   // Accès console pour le débogage / extensions.
-  window.visualSinger = { settings, theme, audio, history, transport, viz, timeline, server, ui };
+  window.visualSinger = { settings, theme, audio, history, transport, viz, timeline, server, ui, recognizer, identify, store };
 }
 
 function showFatal(title, message, err) {
@@ -173,4 +245,4 @@ function showFatal(title, message, err) {
   document.getElementById('errCode').textContent = String(err?.message || err);
 }
 
-boot();
+boot().catch((err) => showFatal('Erreur de démarrage', "L'application n'a pas pu démarrer.", err));

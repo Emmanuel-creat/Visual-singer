@@ -1,0 +1,4 @@
+*.bin binary
+*.wav binary
+vendor/*.js -text
+models/**/*.json -text

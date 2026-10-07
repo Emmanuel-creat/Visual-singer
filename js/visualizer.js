@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import { OrbitCamera } from './orbit.js';
 import { BANDS } from './audio.js';
 import { clamp, damp, formatClock, formatFreq, hexToRgb } from './utils.js';
+import { CATEGORIES } from './sound-labels.js';
 
 export const W = 36;   // largeur (temps)
 export const D = 26;   // profondeur (fréquence)
@@ -41,6 +42,8 @@ const GAMMA = 1.35;
 const MAX_TICKS = 48;
 const MAX_MARKERS = 64;
 const PEAK_LABELS = 4;
+const MAX_DET = 32;
+const DET_LABELS = 6;
 const FREQ_TICKS = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
 
 /* ----------------------------- Shaders ---------------------------------- */
@@ -506,6 +509,56 @@ export class Visualizer {
     this.markers = new THREE.Points(pg, this._glowMaterial());
     this.beams.frustumCulled = this.markers.frustumCulled = false;
     this.scene.add(this.beams, this.markers);
+
+    // Détections (sons identifiés) : segments colorés au sommet du mur du fond.
+    const dg = new THREE.BufferGeometry();
+    this.detPos = new THREE.BufferAttribute(new Float32Array(MAX_DET * 6 * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    this.detCol = new THREE.BufferAttribute(new Float32Array(MAX_DET * 6 * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    dg.setAttribute('position', this.detPos);
+    dg.setAttribute('color', this.detCol);
+    this.detLines = new THREE.LineSegments(dg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false }));
+    this.detLines.frustumCulled = false;
+    this.scene.add(this.detLines);
+    this.detections = [];
+    this._catRgb = Object.fromEntries(Object.entries(CATEGORIES).map(([k, c]) => [k, hexToRgb(c.color)]));
+  }
+
+  /** Liste des détections (référence partagée, mise à jour par le module de reconnaissance). */
+  setDetections(list) { this.detections = list; }
+
+  _updateDetections(ws, we, cursor, toX) {
+    const pos = this.detPos.array, col = this.detCol.array;
+    let n = 0, labelled = 0;
+    const list = this.detections;
+    const y = H + 0.9, z = -D / 2;
+    for (let k = list.length - 1; k >= 0 && n < MAX_DET; k--) {
+      const d = list[k];
+      const t0 = d.start, t1 = d.end;
+      if (t1 < ws || t0 > we) continue;
+      const x0 = clamp(toX(t0), -W / 2, W / 2), x1 = clamp(toX(t1), -W / 2, W / 2);
+      const [r, g, b] = this._catRgb[d.category] || this._catRgb.other;
+      const a = t0 > cursor ? 0.35 : 1;
+      // Barre horizontale + deux attaches verticales.
+      const segs = [[x0, y, z, x1, y, z], [x0, y - 0.6, z, x0, y, z], [x1, y - 0.6, z, x1, y, z]];
+      for (const s of segs) {
+        const i = n * 18 + segs.indexOf(s) * 6;
+        for (let j = 0; j < 6; j++) pos[i + j] = s[j];
+        col[i] = col[i + 3] = r * a; col[i + 1] = col[i + 4] = g * a; col[i + 2] = col[i + 5] = b * a;
+      }
+      if (labelled < DET_LABELS) {
+        const lbl = this.lblDet[labelled++];
+        lbl.visible = true;
+        lbl.pos.set((x0 + x1) / 2, y + 0.25, z);
+        const c = CATEGORIES[d.category] || CATEGORIES.other;
+        this.labels.text(lbl, `${c.icon} ${d.label} · ${Math.round(d.confidence * 100)}%`);
+        lbl.div.style.setProperty('--cat', c.color);
+        lbl.div.style.opacity = a < 1 ? '0.5' : '1';
+      }
+      n++;
+    }
+    for (let k = labelled; k < DET_LABELS; k++) this.lblDet[k].visible = false;
+    this.detLines.geometry.setDrawRange(0, n * 6);
+    this.detPos.needsUpdate = this.detCol.needsUpdate = true;
   }
 
   _buildLabels() {
@@ -517,6 +570,7 @@ export class Visualizer {
     this.lblZones = ['bass', 'mid', 'treble'].map((z) => L.add(`zone zone-${z}`));
     this.lblCursor = L.add('cursor-tag');
     this.lblPeaks = Array.from({ length: PEAK_LABELS }, () => L.add('peak-tag'));
+    this.lblDet = Array.from({ length: DET_LABELS }, () => L.add('det-tag'));
     this._placeStaticLabels();
   }
 
@@ -632,6 +686,7 @@ export class Visualizer {
     this._updateTicks(ws, we, toX);
     this._updateMarkers(history, ws, we, cursor, Hs, s.trail, toX);
     this._updateZones(s.zones);
+    this._updateDetections(ws, we, cursor, toX);
 
     // Libellé du curseur.
     this.lblCursor.pos.set(this.cursorX, H * 1.15 + 0.4, D / 2);

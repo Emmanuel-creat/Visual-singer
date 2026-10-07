@@ -648,3 +648,100 @@ input[type="range"] { accent-color: var(--accent); width: 100%; }
   .drawer-body { min-width: 16rem; }
   .cam-bar { top: auto; bottom: 2.4rem; }
 }
+
+/* ------------------------------------------------------- Identification */
+.id-main {
+  --cat: var(--dim);
+  display: grid; grid-template-columns: 2.9rem 1fr auto; align-items: center; gap: 0.7rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neu-in-sm);
+  margin-bottom: 0.7rem;
+  transition: background .3s;
+}
+.id-main[data-cat]:not([data-cat=""]) { background: color-mix(in srgb, var(--cat) 9%, transparent); }
+.id-icon {
+  width: 2.9rem; height: 2.9rem; display: grid; place-items: center;
+  border-radius: 14px; background: var(--raised); box-shadow: var(--neu-out-sm);
+  font-size: 1.45rem; color: var(--dim);
+}
+.id-main[data-cat]:not([data-cat=""]) .id-icon { box-shadow: var(--neu-out-sm), inset 0 0 0 1.5px var(--cat); animation: idPop .4s ease-out; }
+.id-text { display: flex; flex-direction: column; min-width: 0; }
+.id-text b { font-size: 0.98rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.id-text span { font-size: 0.68rem; color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; }
+.id-conf { font-family: var(--font-num); font-weight: 700; font-size: 1.05rem; color: var(--cat); }
+.id-progress { margin: -0.2rem 0 0.7rem; font-size: 0.66rem; color: var(--muted); }
+.id-progress .bar { margin-bottom: 0.3rem; }
+.id-progress .bar i { background: var(--accent); transition: transform .2s; }
+.cat-rows { display: flex; flex-direction: column; gap: 0.32rem; margin-bottom: 0.6rem; }
+.cat-row { display: grid; grid-template-columns: 1.2rem 5.6rem 1fr 2.4rem; align-items: center; gap: 0.45rem; font-size: 0.68rem; }
+.cat-row .ci { font-size: 0.8rem; text-align: center; }
+.cat-row .cl { color: var(--muted); }
+.cat-row .bar { height: 0.5rem; }
+.cat-row .bar i { background: var(--cat); transition: transform .35s ease-out; }
+.cat-row b { font-family: var(--font-num); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+.id-alt { display: flex; flex-wrap: wrap; gap: 0.35rem; min-height: 1.4rem; margin-bottom: 0.7rem; }
+.id-alt .muted { font-size: 0.68rem; color: var(--dim); }
+.chip {
+  font-size: 0.64rem; padding: 0.18rem 0.55rem; border-radius: 99px;
+  box-shadow: var(--neu-out-sm); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+.chip b { color: var(--cat); font-weight: 700; margin-left: 0.15rem; }
+.id-panel #btnRecog { width: 100%; }
+.id-panel #btnRecog:disabled { opacity: .6; cursor: progress; }
+
+/* Onglets du journal */
+.panel h3.tabs { gap: 0.4rem; }
+.tabs button {
+  border: 0; background: transparent; padding: 0.3rem 0.65rem; border-radius: 10px; cursor: pointer;
+  font-size: 0.72rem; font-weight: 600; color: var(--dim);
+}
+.tabs button small { margin-left: 0.25rem; font-weight: 500; }
+.tabs button.on { color: var(--text); box-shadow: var(--neu-in-sm); }
+[hidden] { display: none !important; }
+
+.det-list { list-style: none; margin: 0 -0.3rem; padding: 0.2rem 0.3rem; overflow-y: auto; min-height: 0; flex: 1; }
+.det-list li {
+  --cat: var(--dim);
+  position: relative;
+  display: grid; grid-template-columns: 1.7rem 1fr auto; gap: 0.55rem; align-items: center;
+  padding: 0.42rem 0.55rem; border-radius: 12px; cursor: pointer;
+  transition: box-shadow .15s;
+  animation: peakIn .45s ease-out;
+}
+.det-list li:hover { box-shadow: var(--neu-in-sm); }
+.det-list .di { width: 1.7rem; height: 1.7rem; display: grid; place-items: center; border-radius: 9px; box-shadow: var(--neu-out-sm), inset 0 0 0 1px color-mix(in srgb, var(--cat) 60%, transparent); font-size: 0.85rem; }
+.det-list .dn, .det-list .dm { display: flex; flex-direction: column; min-width: 0; }
+.det-list .dn b { font-size: 0.76rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.det-list .dn small { font-size: 0.62rem; color: var(--dim); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.det-list .dm { align-items: flex-end; font-family: var(--font-num); }
+.det-list .dm b { font-size: 0.74rem; color: var(--cat); }
+.det-list .dm small { font-size: 0.6rem; color: var(--dim); white-space: nowrap; }
+.det-list .live-pip { position: absolute; left: 0.3rem; top: 0.35rem; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--cat); box-shadow: 0 0 8px var(--cat); animation: pulse 1.2s infinite; }
+.det-list li.past { opacity: .62; cursor: default; }
+.det-list li.past:hover { box-shadow: none; }
+.det-list li.sep { display: block; cursor: default; font-size: 0.62rem; color: var(--dim); padding: 0.6rem 0.4rem 0.2rem; animation: none; }
+.det-list li.sep:hover, .det-list li.empty:hover { box-shadow: none; }
+.det-list li.empty { display: block; color: var(--dim); cursor: default; font-size: 0.72rem; animation: none; }
+
+/* HUD : source identifiée */
+.hud-row.source .v { max-width: 8.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--src, var(--text)); }
+
+/* Étiquettes de détection dans la 3D */
+.lbl.det-tag {
+  --cat: var(--text);
+  color: var(--text); font-family: var(--font-ui); font-weight: 600; font-size: 0.66rem;
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  padding: 0.18rem 0.6rem; border-radius: 99px;
+  box-shadow: 3px 3px 8px var(--sh-dark), inset 0 0 0 1.5px color-mix(in srgb, var(--cat) 75%, transparent);
+  translate: -50% -100%;
+}
+
+@keyframes idPop { from { transform: scale(.85); } to { transform: none; } }
+
+.file-btn { width: 100%; margin-top: 0.55rem; box-shadow: none; color: var(--muted); }
+.viewport.drop-target::before {
+  content: "Déposer le fichier audio pour l'analyser"; position: absolute; inset: 1rem; z-index: 5;
+  display: grid; place-items: center; border-radius: var(--radius); font-weight: 600;
+  border: 2px dashed var(--accent); background: color-mix(in srgb, var(--bg) 70%, transparent);
+}

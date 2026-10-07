@@ -1,6 +1,6 @@
 # Visual Singer
 
-Une interface web locale qui analyse le microphone en temps réel et transforme le son en une visualisation 3D interactive : fréquences, intensité, temps, pics, traînées et couleurs personnalisables.
+Une interface web locale qui analyse le microphone en temps réel, transforme le son en une visualisation 3D interactive et **identifie qui fait le bruit** : espèce d'oiseau, animal, humain (parole, chant, rire, toux…), musique ou environnement. Tout tourne sur l'ordinateur, sans connexion Internet.
 
 Le son devient un **terrain 3D** :
 
@@ -14,17 +14,53 @@ L'interface adopte un style néomorphique sombre. Elle inclut aussi un panneau d
 
 ## Lancement
 
-Les navigateurs bloquent le microphone pour les pages ouvertes en `file://`. Il faut donc servir le dossier en local :
+Double-clic sur **`start.bat`** (Windows), ou :
 
 ```bash
-python -m http.server 8080
+python server.py
 ```
 
-puis ouvrir **http://localhost:8080**.
+Le navigateur s'ouvre sur **http://localhost:8080**. Il faut seulement Python 3, sans aucun paquet à installer. Les navigateurs bloquent le micro en `file://`, d'où ce petit serveur local.
 
-Raccourcis : double-clic sur `start.bat` (Windows) ou `./start.sh` (macOS / Linux).
+`server.py` sert l'application et **enregistre les données sur le Bureau**, dans le dossier `Visual Singer` (le Bureau OneDrive est détecté automatiquement) :
 
-Rien à installer et aucun service cloud : Three.js est embarqué dans `vendor/`. Il faut un navigateur récent compatible WebGL2 (Chrome, Edge ou Firefox).
+```text
+Bureau/Visual Singer/
+  config.json                    réglages + thèmes
+  detections/2026-10-07.csv      journal des sons identifiés (s'ouvre dans Excel)
+  detections/2026-10-07.jsonl    même journal au format JSON
+  extraits/2026-10-07/*.wav      extrait audio de 3 s de chaque détection
+```
+
+Options : `python server.py --port 9000 --data "D:/Mes enregistrements"`.
+Avec un simple `python -m http.server 8080`, l'application fonctionne aussi, mais les réglages restent alors dans le navigateur, sans sauvegarde sur le Bureau.
+
+Tout est embarqué (Three.js, TensorFlow.js, modèles) : aucun service cloud. Il faut un navigateur récent compatible WebGL2 (Chrome, Edge ou Firefox).
+
+## Identification des sons
+
+Toutes les 1,5 s, les 3 dernières secondes de son sont analysées par deux réseaux de neurones exécutés dans le navigateur :
+
+| Modèle | Reconnaît | Détail |
+|--------|-----------|--------|
+| **YAMNet** (Google) | 521 types de sons | humains (parole d'homme, de femme ou d'enfant, chant, rire, pleurs, toux, ronflement, sifflement, pas…), animaux (chien, chat, cheval, vache, cochon, mouton, poule, canard, grenouille, grillon, abeille, chouette…), musique, nature (pluie, vent, orage), véhicules, objets |
+| **BirdNET v2.4** (Cornell Lab / TU Chemnitz) | plus de 6 000 espèces d'oiseaux | noms français et scientifiques ; lancé dès que YAMNet entend un oiseau |
+
+- Le panneau **IDENTIFICATION** affiche la source en cours (icône, nom, nom scientifique, confiance), les scores par catégorie (Oiseau, Animal, Humain, Musique, Nature, Environnement) et les autres candidats.
+- Chaque détection apparaît aussi :
+  - dans le journal **DÉTECTIONS** (cliquable pour revoir l'instant) ;
+  - sur la **timeline** (bande colorée) ;
+  - dans la **3D** (étiquette au-dessus du terrain) ;
+  - dans le HUD (ligne SOURCE).
+- **📂 Analyser un fichier audio** (ou glisser-déposer sur la vue 3D) : analyse un enregistrement existant (WAV, MP3, OGG, FLAC…).
+- Réglages (SETTINGS → IDENTIFICATION DES SONS) :
+  - confiance minimale ;
+  - fréquence d'analyse ;
+  - « toujours chercher l'espèce d'oiseau » ;
+  - **filtre géographique** : avec ta position (bouton 📍) et la date, BirdNET écarte les espèces improbables dans ta région à cette saison, ce qui réduit fortement les erreurs.
+- Les modèles (~95 Mo) se chargent au premier lancement de l'analyse, en environ 10 s.
+
+> Limites : la reconnaissance est probabiliste. Vérifie les identifications importantes en réécoutant les extraits WAV. YAMNet dit *ce que* fait le bruit (une voix, un chien), mais ne reconnaît pas *quelle* personne parle.
 
 ## Utilisation
 
@@ -93,9 +129,18 @@ js/timeline.js          timeline / scrubber (Canvas 2D)
 js/controls.js          interface : panneaux, paramètres, couleurs, raccourcis
 js/theme.js             couleurs, presets, thèmes sauvegardés (localStorage)
 js/server.js            connexion serveur (simulation, WebSocket, HTTP, fichier JSON)
+js/recognizer.js        identification des sons (YAMNet + BirdNET, TensorFlow.js)
+js/sound-labels.js      catégories et noms français des sons
+js/identify-panel.js    panneau d'identification + journal des détections
+js/capture-worklet.js   AudioWorklet : signal brut pour la reconnaissance
+js/persist.js           sauvegarde sur le Bureau (via server.py), encodage WAV
+server.py               serveur local + API de sauvegarde (Python, bibliothèque standard)
+models/yamnet/          YAMNet TFJS + liste des 521 classes
+models/birdnet/         BirdNET v2.4 TFJS, libellés FR/EN, modèle géographique (mdata)
 js/settings.js          paramètres centralisés et persistés
 js/utils.js             outils partagés
 vendor/three.module.min.js   Three.js r169 (MIT)
+vendor/tf.min.js             TensorFlow.js 4.22 (Apache 2.0)
 ```
 
 L'audio ne dépend pas du serveur : la visualisation fonctionne même sans connexion. Pour le débogage, tous les modules sont accessibles dans la console via `window.visualSinger`.
@@ -133,4 +178,11 @@ Pour ajouter un protocole : écrire une classe avec `start(emit, status)` et `st
 
 ## Confidentialité
 
-Le son n'est jamais enregistré ni envoyé. Seules les mesures d'analyse restent en mémoire, et uniquement pendant la durée d'historique choisie. Les préférences (paramètres, thèmes) sont stockées dans le `localStorage` du navigateur.
+Rien n'est envoyé sur Internet : l'analyse et la reconnaissance tournent sur l'ordinateur. Le son en continu n'est pas enregistré. Seuls les extraits de 3 s des détections sont écrits dans `Bureau/Visual Singer/extraits`, et cette option se désactive dans les réglages.
+
+## Licences
+
+- Code de l'application : celle du dépôt.
+- **BirdNET v2.4** (`models/birdnet/`) : © K. Lisa Yang Center for Conservation Bioacoustics, Cornell Lab of Ornithology & Chemnitz University of Technology, licence **CC BY-NC-SA 4.0**. Usage **non commercial** uniquement, voir `models/birdnet/LICENSE.txt`.
+- **YAMNet** (`models/yamnet/`) : © Google, Apache 2.0.
+- Three.js (MIT), TensorFlow.js (Apache 2.0).

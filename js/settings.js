@@ -59,15 +59,28 @@ export const DEFAULTS = Object.freeze({
   serverSource: 'simulated', // simulated | websocket | http | json | off
   serverUrl: 'ws://localhost:8765',
   serverInterval: 2000,
+
+  // --- Identification des sons ---
+  recogEnabled: true,      // charge les modèles et analyse dès que l'audio est actif
+  recogInterval: 1.5,      // secondes entre deux analyses (fenêtre de 3 s)
+  soundMinConf: 0.3,       // confiance minimale YAMNet (humains, animaux, sons)
+  birdMinConf: 0.35,       // confiance minimale BirdNET (espèces d'oiseaux)
+  birdAlways: false,       // lancer BirdNET même si YAMNet n'entend pas d'oiseau
+  useLocation: false,      // filtrer les espèces selon la position et la saison
+  latitude: 46.6,
+  longitude: 2.4,
+  saveDetections: true,    // journal CSV/JSON sur le Bureau
+  saveClips: true,         // extrait WAV de chaque détection
 });
 
 export class Settings extends Emitter {
-  constructor() {
+  /** @param {object} [initial] réglages prioritaires (ex. config.json du Bureau) */
+  constructor(initial = null) {
     super();
-    const saved = storage.get(STORAGE_KEY, {});
+    const saved = { ...(storage.get(STORAGE_KEY, {}) || {}), ...(initial || {}) };
     this.values = { ...DEFAULTS };
     // On ne reprend que les clés connues, avec le bon type.
-    for (const [k, v] of Object.entries(saved || {})) {
+    for (const [k, v] of Object.entries(saved)) {
       if (k in DEFAULTS && typeof v === typeof DEFAULTS[k]) this.values[k] = v;
     }
     this._save = debounce(() => storage.set(STORAGE_KEY, this.values), 250);

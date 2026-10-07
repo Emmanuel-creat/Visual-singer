@@ -2,7 +2,8 @@
  * audio.js — Capture microphone + analyse FFT temps réel (Web Audio API).
  *
  * Chaîne audio :
- *   [Micro | Synthé démo] → AnalyserNode → Gain(0) → destination
+ *   [Micro | Synthé démo] → Gain(entrée) ─┬→ AnalyserNode → Gain(0) → destination
+ *                                          └→ AudioWorklet (signal brut → reconnaissance)
  * Le gain nul garde le graphe "tiré" par la destination sans jamais
  * renvoyer le son vers les haut-parleurs (pas de larsen).
  *
@@ -30,6 +31,11 @@ export class AudioEngine extends Emitter {
     this.demo = null;
     this.deviceLabel = '';
     this.clipUntil = 0;
+    // Tampon circulaire du signal brut (alimente la reconnaissance des sons).
+    this.ring = null;
+    this.ringPos = 0;
+    this.ringFilled = 0;
+    this.lastBlockAt = 0;
 
     this.frame = {
       time: 0,
@@ -65,13 +71,50 @@ export class AudioEngine extends Emitter {
     if (!this.ctx) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Ctx({ latencyHint: 'interactive' });
+      this.input = this.ctx.createGain();
       this.analyser = this.ctx.createAnalyser();
       const silent = this.ctx.createGain();
       silent.gain.value = 0;
+      this.input.connect(this.analyser);
       this.analyser.connect(silent).connect(this.ctx.destination);
       this._applyAnalyserSettings();
+      this.ring = new Float32Array(Math.ceil(this.ctx.sampleRate * 8));
+      try {
+        await this.ctx.audioWorklet.addModule(new URL('./capture-worklet.js', import.meta.url));
+        this.tap = new AudioWorkletNode(this.ctx, 'vs-capture', { numberOfInputs: 1, numberOfOutputs: 1, channelCount: 1, channelCountMode: 'explicit' });
+        this.tap.port.onmessage = (e) => this._onBlock(e.data);
+        this.input.connect(this.tap);
+        this.tap.connect(silent);
+      } catch (err) {
+        console.warn('[audio] AudioWorklet indisponible : reconnaissance désactivée', err);
+      }
     }
     if (this.ctx.state === 'suspended') await this.ctx.resume();
+  }
+
+  /** Bloc de signal brut reçu du worklet → tampon circulaire. */
+  _onBlock(block) {
+    if (this.state !== 'active') return;
+    const r = this.ring, n = block.length;
+    const first = Math.min(n, r.length - this.ringPos);
+    r.set(block.subarray(0, first), this.ringPos);
+    if (first < n) r.set(block.subarray(first), 0);
+    this.ringPos = (this.ringPos + n) % r.length;
+    this.ringFilled = Math.min(r.length, this.ringFilled + n);
+    this.lastBlockAt = performance.now();
+  }
+
+  /** Copie des `seconds` dernières secondes de signal brut (null si pas assez de données). */
+  getRecent(seconds) {
+    if (!this.ring) return null;
+    const len = Math.round(seconds * this.ctx.sampleRate);
+    if (this.ringFilled < len || len > this.ring.length) return null;
+    const out = new Float32Array(len);
+    const start = (this.ringPos - len + this.ring.length) % this.ring.length;
+    const first = Math.min(len, this.ring.length - start);
+    out.set(this.ring.subarray(start, start + first), 0);
+    if (first < len) out.set(this.ring.subarray(0, len - first), first);
+    return out;
   }
 
   _applyAnalyserSettings() {
@@ -176,7 +219,7 @@ export class AudioEngine extends Emitter {
     this._teardownSource();
     this.stream = stream;
     this.sourceNode = this.ctx.createMediaStreamSource(stream);
-    this.sourceNode.connect(this.analyser);
+    this.sourceNode.connect(this.input);
     const track = stream.getAudioTracks()[0];
     this.deviceLabel = track?.label || 'Microphone';
     track?.addEventListener('ended', () => {
@@ -196,9 +239,39 @@ export class AudioEngine extends Emitter {
       return this._fail({ name: 'AudioContextError', message: err.message });
     }
     this._teardownSource();
-    this.demo = new DemoSynth(this.ctx, this.analyser);
+    this.demo = new DemoSynth(this.ctx, this.input);
     this.source = 'demo';
     this.deviceLabel = 'Signal de démonstration';
+    this._buildBandTables();
+    this._setState('active');
+  }
+
+  /**
+   * Lit un fichier audio (enregistrement d'oiseau, etc.) à travers l'analyse et la reconnaissance.
+   * Le son est aussi joué sur les haut-parleurs.
+   */
+  async playFile(file) {
+    try {
+      await this._ensureContext();
+    } catch (err) {
+      return this._fail({ name: 'AudioContextError', message: err.message });
+    }
+    let buffer;
+    try {
+      buffer = await this.ctx.decodeAudioData(await file.arrayBuffer());
+    } catch {
+      return this._fail({ name: 'DecodeError', message: file.name });
+    }
+    this._teardownSource();
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(this.input);
+    src.connect(this.ctx.destination);
+    src.onended = () => { if (this.fileNode === src) this.stop(); };
+    src.start();
+    this.fileNode = src;
+    this.source = 'file';
+    this.deviceLabel = file.name;
     this._buildBandTables();
     this._setState('active');
   }
@@ -211,12 +284,18 @@ export class AudioEngine extends Emitter {
   }
 
   _teardownSource() {
+    this.ringFilled = 0;
     if (this.sourceNode) { try { this.sourceNode.disconnect(); } catch { /* déjà déconnecté */ } }
     this.sourceNode = null;
     if (this.stream) this.stream.getTracks().forEach((t) => t.stop());
     this.stream = null;
     if (this.demo) this.demo.stop();
     this.demo = null;
+    if (this.fileNode) {
+      const n = this.fileNode;
+      this.fileNode = null;
+      try { n.stop(); n.disconnect(); } catch { /* déjà arrêté */ }
+    }
   }
 
   _fail(err) {
@@ -407,6 +486,13 @@ export function describeAudioError(err) {
         title: 'Configuration non supportée',
         message: "Le périphérique choisi ne supporte pas la configuration demandée.",
         hint: 'Choisissez une autre entrée dans les paramètres audio.',
+      };
+    case 'DecodeError':
+      return {
+        code: name,
+        title: 'Fichier illisible',
+        message: `Impossible de décoder « ${err.message} ».`,
+        hint: 'Formats acceptés : WAV, MP3, OGG, FLAC, M4A (selon le navigateur).',
       };
     case 'TrackEnded':
       return {

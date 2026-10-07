@@ -40,16 +40,17 @@ export const PRESETS = {
 const isHex = (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
 
 export class ThemeManager extends Emitter {
-  constructor() {
+  /** @param {object} [initial] { theme: {name, colors}, customThemes } (ex. config.json du Bureau) */
+  constructor(initial = null) {
     super();
-    const saved = storage.get(CURRENT_KEY, null);
+    const saved = initial?.theme || storage.get(CURRENT_KEY, null);
     this.colors = { ...PRESETS.Graphite };
     this.presetName = 'Graphite';
     if (saved?.colors) {
       for (const { key } of COLOR_KEYS) if (isHex(saved.colors[key])) this.colors[key] = saved.colors[key];
       this.presetName = saved.name || 'Personnalisé';
     }
-    this.custom = storage.get(CUSTOM_KEY, {}) || {};
+    this.custom = initial?.customThemes || storage.get(CUSTOM_KEY, {}) || {};
     this.applyCss();
   }
 
