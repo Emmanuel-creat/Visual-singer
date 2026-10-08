@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual Singer · Cours</title>
+  <meta name="description" content="Analyse locale de cours : transcription, synthèse, croisement avec le support.">
+  <meta name="theme-color" content="#2a2b2f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a2b2f'/%3E%3Cpath d='M6 9h8c1 0 2 .8 2 2 0-1.2 1-2 2-2h8v15h-8c-1 0-2 .7-2 2 0-1.3-1-2-2-2H6z' fill='%23c4851a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/sommeil.css">
+  <link rel="stylesheet" href="css/cours.css">
+  <script type="module" src="js/cours/app.js"></script>
+</head>
+<body class="sleep-app cours-app">
+<div class="c-app" id="app">
+
+  <!-- =============================== EN-TÊTE =============================== -->
+  <header class="s-top">
+    <button class="icon-btn" id="btnSide" title="Afficher / masquer la liste des cours"><i data-icon="book" data-tile="0"></i></button>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true" data-icon="book" data-icon-color="#c4851a"></div>
+      <div class="brand-text"><b>VISUAL SINGER</b><span>Analyse de cours</span></div>
+    </div>
+    <nav class="s-tabs" role="tablist" aria-label="Sections">
+      <button data-tab="read" class="on">Lecture</button>
+      <button data-tab="summary">Résumé</button>
+      <button data-tab="notions">Notions</button>
+      <button data-tab="cross">Audio ↔ Support</button>
+      <button data-tab="review">Révision</button>
+      <button data-tab="search">Recherche</button>
+      <button data-tab="chat">Chat</button>
+      <button data-tab="export">Export</button>
+    </nav>
+    <div class="s-top-right">
+      <span class="sys-pill" id="sysPill" title="Matériel et modèles">…</span>
+      <a class="btn ghost" href="sommeil.html" title="Application Sommeil">Sommeil ↗</a>
+      <a class="btn ghost" href="index.html" title="Détecteur de sons">Détecteur ↗</a>
+    </div>
+  </header>
+
+  <div class="c-body">
+    <!-- ============================ COURS (côté) ============================ -->
+    <aside class="c-side" id="side">
+      <div class="s-card side-card">
+        <div class="card-head"><h3>Cours</h3><button class="btn" id="btnNew"><i data-icon="upload" data-tile="0"></i> Nouveau</button></div>
+        <ul class="proj-list" id="projList"><li class="muted">Chargement…</li></ul>
+      </div>
+
+      <div class="s-card side-card" id="projPanel" hidden>
+        <div class="card-head">
+          <input class="title-input" id="projTitle" spellcheck="false" aria-label="Titre du cours">
+          <button class="icon-btn" id="btnDelete" title="Mettre le cours à la corbeille"><i data-icon="trash" data-tile="0" data-icon-color="#e0384a"></i></button>
+        </div>
+
+        <div class="drop" id="dropMedia" tabindex="0">
+          <span class="drop-ico" data-icon="mic" data-icon-color="#c4851a"></span>
+          <div><b id="mediaName">Ajouter l'audio / la vidéo du cours</b><small id="mediaInfo">MP3, WAV, M4A, MP4, MKV… (glisser-déposer)</small></div>
+          <input type="file" id="fileMedia" accept="audio/*,video/*,.mkv,.wma,.flac,.opus" hidden>
+        </div>
+        <div class="drop" id="dropDocs" tabindex="0">
+          <span class="drop-ico" data-icon="slides" data-icon-color="#3987e5"></span>
+          <div><b>Ajouter le support de cours</b><small>PDF, PowerPoint, Word, texte (plusieurs fichiers possibles)</small></div>
+          <input type="file" id="fileDocs" accept=".pdf,.pptx,.ppsx,.pptm,.ppt,.odp,.docx,.doc,.odt,.txt,.md" multiple hidden>
+        </div>
+        <ul class="doc-list" id="docList"></ul>
+        <div class="upload-bar" id="uploadBar" hidden><div class="bar"><i></i></div><span></span></div>
+
+        <details class="settings" id="settingsBox">
+          <summary><i data-icon="gear" data-tile="0"></i> Paramètres d'analyse</summary>
+          <label class="field">Langue
+            <select data-set="language"><option value="fr">Français</option><option value="en">Anglais</option><option value="auto">Détection automatique</option>
+              <option value="es">Espagnol</option><option value="de">Allemand</option><option value="it">Italien</option></select>
+          </label>
+          <label class="field">Nettoyage audio
+            <select data-set="cleaning"><option value="off">Aucun</option><option value="light">Léger (recommandé)</option><option value="strong">Fort (enregistrement très bruité)</option></select>
+          </label>
+          <label class="field">Intervenants
+            <select data-set="speakers"><option value="0">Détection automatique</option><option value="1">1 (cours magistral)</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
+          </label>
+          <label class="field">Analyse par le LLM
+            <select data-set="llm_profile"><option value="quality">Qualité maximale</option><option value="fast">Rapide</option></select>
+          </label>
+          <label class="field">Questions de révision
+            <select data-set="qa_count"><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="50">50</option></select>
+          </label>
+          <label class="check"><input type="checkbox" data-set="use_doc_vocabulary"> Guider la transcription avec le vocabulaire du support</label>
+        </details>
+
+        <div class="run-row">
+          <button class="btn primary-btn" id="btnRun"><i data-icon="play" data-tile="0" data-icon-color="#fff"></i> <span>Lancer l'analyse</span></button>
+          <button class="btn ghost" id="btnCancel" hidden>Annuler</button>
+        </div>
+        <ol class="steps" id="steps"></ol>
+        <details class="logbox"><summary>Journal</summary><pre id="logs"></pre></details>
+      </div>
+    </aside>
+
+    <!-- ================================ CONTENU ================================ -->
+    <main class="c-main">
+      <div class="c-empty" id="emptyState">
+        <div class="card-icon" data-icon="book" data-icon-color="#c4851a"></div>
+        <h2>Analyse locale de cours</h2>
+        <p>Créez un cours, ajoutez l'enregistrement et le support (diaporama, PDF…), puis lancez l'analyse. Tout reste sur cet ordinateur.</p>
+        <button class="btn" id="btnNew2"><i data-icon="upload" data-tile="0"></i> Nouveau cours</button>
+      </div>
+
+      <!-- Lecture -->
+      <section class="pane on" data-pane="read">
+        <div class="read-grid">
+          <div class="s-card player-card">
+            <div class="player-box" id="playerBox"><p class="muted">Aucun média.</p></div>
+            <div class="now-line"><span id="nowTime">00:00</span><b id="nowSpeaker"></b><span class="muted" id="nowSection"></span></div>
+            <div class="speakers" id="speakers"></div>
+            <h3 class="mt">Sections</h3>
+            <ol class="chapters" id="chapters"></ol>
+          </div>
+          <div class="s-card transcript-card">
+            <div class="card-head">
+              <h3>Transcription</h3>
+              <div class="row-btns">
+                <input type="search" id="trFilter" placeholder="Filtrer la transcription…">
+                <label class="check small"><input type="checkbox" id="follow" checked> Suivre la lecture</label>
+              </div>
+            </div>
+            <div class="transcript" id="transcript"><p class="muted">La transcription apparaîtra ici.</p></div>
+          </div>
+          <div class="s-card slide-card">
+            <div class="card-head"><h3 id="slideHead">Support</h3><span class="muted" id="slideMeta"></span></div>
+            <div class="slide-view" id="slideView"><p class="muted">Aucun support.</p></div>
+            <div class="slide-times" id="slideTimes"></div>
+            <div class="thumbs" id="thumbs"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Résumé -->
+      <section class="pane" data-pane="summary">
+        <div class="s-card hero-card">
+          <span class="muted" id="sumModel"></span>
+          <h1 id="sumTitle">—</h1>
+          <div class="md" id="sumShort"></div>
+        </div>
+        <div class="sum2">
+          <div class="s-card"><h3>Plan du cours</h3><div id="sumPlan"></div></div>
+          <div class="s-card"><h3>Résumé détaillé</h3><div class="md" id="sumLong"></div></div>
+        </div>
+        <div class="s-card"><h3>Synthèse finale — audio + support</h3><div class="md" id="sumSynth"></div></div>
+        <div class="s-card"><h3>Détail par section</h3><div class="sec-cards" id="sumSections"></div></div>
+      </section>
+
+      <!-- Notions -->
+      <section class="pane" data-pane="notions">
+        <div class="s-card">
+          <div class="card-head"><h3>Notions et définitions</h3><input type="search" id="glossFilter" placeholder="Filtrer…"></div>
+          <div class="gloss" id="gloss"></div>
+        </div>
+        <div class="sum2">
+          <div class="s-card"><h3>Formules et règles</h3><div id="formulas"></div></div>
+          <div class="s-card"><h3>Exemples</h3><div id="examples"></div></div>
+        </div>
+        <div class="s-card"><h3>À retenir (souligné par l'enseignant)</h3><div id="keep"></div></div>
+      </section>
+
+      <!-- Croisement -->
+      <section class="pane" data-pane="cross">
+        <div class="tiles row" id="crossTiles"></div>
+        <div class="sum2">
+          <div class="s-card"><h3>Contradictions et différences</h3><div id="crossDiff"></div></div>
+          <div class="s-card"><h3>Expliqué à l'oral, absent du support</h3><div id="crossOral"></div></div>
+        </div>
+        <div class="s-card">
+          <div class="card-head"><h3>Support : couverture à l'oral</h3><div class="q-legend" data-qlegend></div></div>
+          <div class="coverage" id="crossCoverage"></div>
+        </div>
+      </section>
+
+      <!-- Révision -->
+      <section class="pane" data-pane="review">
+        <div class="s-card">
+          <div class="card-head">
+            <h3>Questions de révision</h3>
+            <div class="row-btns"><span class="muted" id="qaScore"></span><button class="btn ghost" id="qaShuffle">Mélanger</button><button class="btn ghost" id="qaReveal">Tout afficher</button></div>
+          </div>
+          <div class="qa" id="qa"></div>
+        </div>
+      </section>
+
+      <!-- Recherche -->
+      <section class="pane" data-pane="search">
+        <div class="s-card">
+          <form class="search-bar" id="searchForm">
+            <i data-icon="search" data-tile="0"></i>
+            <input type="search" id="searchInput" placeholder="Rechercher une notion dans la transcription et le support…" autocomplete="off">
+            <select id="searchKind"><option value="all">Tout</option><option value="audio">Transcription</option><option value="doc">Support</option></select>
+            <button class="btn" type="submit">Rechercher</button>
+          </form>
+          <div class="results" id="results"></div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section class="pane" data-pane="chat">
+        <div class="s-card chat-card">
+          <div class="chat-log" id="chatLog">
+            <div class="msg bot"><div class="bubble">Posez une question sur le cours : je réponds uniquement à partir de la transcription et du support, avec les sources.</div></div>
+          </div>
+          <form class="chat-form" id="chatForm">
+            <textarea id="chatInput" rows="2" placeholder="Ex. : Quelle différence entre … et … ? Résume la partie sur … Quelles formules faut-il connaître ?"></textarea>
+            <button class="btn primary-btn" type="submit"><i data-icon="chat" data-tile="0" data-icon-color="#fff"></i> Envoyer</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Export -->
+      <section class="pane" data-pane="export">
+        <div class="s-card export-card">
+          <h3>Exporter le rapport complet</h3>
+          <p class="muted">Synthèse finale, plan, résumés, notions, formules, croisement oral/support, questions de révision et, en option, la transcription horodatée.</p>
+          <label class="check"><input type="checkbox" id="expTranscript" checked> Inclure la transcription complète</label>
+          <div class="export-btns">
+            <button class="btn" data-export="md"><i data-icon="doc" data-tile="0"></i> Markdown</button>
+            <button class="btn" data-export="docx"><i data-icon="doc" data-tile="0" data-icon-color="#3987e5"></i> Word (.docx)</button>
+            <button class="btn" data-export="pdf"><i data-icon="doc" data-tile="0" data-icon-color="#e0384a"></i> PDF</button>
+          </div>
+          <p class="muted" id="exportNote"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

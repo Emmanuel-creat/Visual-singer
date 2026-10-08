@@ -1,0 +1,5 @@
+# Versions CUDA 12.8 de PyTorch (RTX 50xx / Blackwell) : empeche une autre bibliotheque
+# de les remplacer par une version CPU.
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+torchaudio==2.11.0+cu128

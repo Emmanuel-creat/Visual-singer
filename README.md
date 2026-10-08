@@ -37,14 +37,15 @@ Avec un simple `python -m http.server 8080`, l'application fonctionne aussi, mai
 
 Tout est embarqué (Three.js, TensorFlow.js, modèles) : aucun service cloud. Il faut un navigateur récent compatible WebGL2 (Chrome, Edge ou Firefox).
 
-## Deux applications
+## Trois applications
 
 | Page | Lanceur | Usage |
 |------|---------|-------|
 | `index.html` — **Détecteur** | `start.bat` | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
 | `sommeil.html` — **Sommeil** | `start-sommeil.bat` | surveillance acoustique de la nuit, statistiques, interprétations, historique |
+| `cours.html` — **Cours** | `start-cours.bat` | transcription, résumés, notions et croisement d'un cours audio/vidéo avec son support |
 
-Les deux partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. Un lien dans la barre du haut permet de passer de l'une à l'autre.
+Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. Un lien dans la barre du haut permet de passer de l'une à l'autre.
 
 ## Application Sommeil
 
@@ -86,6 +87,81 @@ Bureau/Visual Singer/sommeil/
 ```
 
 > Les mesures sont acoustiques et estimées : ce n'est pas une polysomnographie.
+
+## Application Cours (analyse de cours audio/vidéo + support)
+
+Troisième interface : `cours.html`. Un **moteur Python local** (`cours_engine/`) transcrit le cours, sépare les intervenants, lit le support (PDF, PowerPoint, Word), puis un LLM local produit les résumés, les notions, les questions de révision et le croisement entre l'oral et le support. Aucune donnée ne quitte l'ordinateur.
+
+### Installation (une seule fois)
+
+Double-clic sur **`install-cours.bat`**, ou bien :
+
+```bash
+cd cours_engine
+uv venv --native-tls --python 3.12 .venv
+uv pip install --native-tls -p .venv torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+uv pip install --native-tls -p .venv -r requirements.txt
+.venv\Scripts\python prefetch.py
+winget install --id Ollama.Ollama -e --source winget
+ollama pull qwen3.5:35b-a3b
+ollama pull qwen3.5:9b
+```
+
+Place nécessaire : ~11 Go (environnement + modèles audio/texte, dans `cours_engine/`, hors Git) + ~29 Go (modèles Ollama).
+PyTorch **cu128** est indispensable pour les cartes RTX 50xx (Blackwell). LibreOffice (facultatif) sert aux miniatures des diapositives et à l'export PDF.
+
+### Lancement
+
+Double-clic sur **`start-cours.bat`** : il démarre Ollama et le moteur, puis ouvre **http://127.0.0.1:8091/cours.html**.
+Le moteur sert aussi les deux autres applications sur ce port.
+
+### Utilisation
+
+1. **Nouveau cours**, puis glisser l'enregistrement (MP3, WAV, M4A, MP4, MKV…) et le support (PDF, PPTX, DOCX… plusieurs fichiers possibles).
+2. Régler la langue, le nettoyage audio, le nombre d'intervenants et le profil du LLM, puis **Lancer l'analyse**. La progression s'affiche étape par étape, avec un journal.
+3. Onglets :
+   - **Lecture** : lecteur, transcription synchronisée (le mot prononcé est surligné, les mots incertains soulignés), intervenants renommables, sections. La diapositive affichée suit automatiquement la parole.
+   - **Résumé** : résumé court, plan, résumé détaillé, synthèse finale audio + support, détail par section.
+   - **Notions** : glossaire filtrable, formules, exemples, « à retenir ».
+   - **Audio ↔ Support** : contradictions et différences, notions expliquées à l'oral mais absentes du support, couverture orale de chaque diapositive (vert = bien expliquée, rouge = pas abordée).
+   - **Révision** : cartes questions/réponses avec suivi « je savais / à revoir ».
+   - **Recherche** : recherche sémantique et par mots-clés. Chaque résultat mène au passage audio ou à la diapositive.
+   - **Chat** : questions libres. La réponse s'affiche au fil de l'eau, avec des sources cliquables vers le moment de l'audio ou la diapositive.
+   - **Export** : Markdown, Word ou PDF.
+
+Tout horodatage affiché est cliquable et mène au passage correspondant.
+
+### Pipeline et choix techniques
+
+| Étape | Outil | Détail |
+|-------|-------|--------|
+| Extraction audio | FFmpeg (embarqué via imageio-ffmpeg) | mono 16 kHz. Nettoyage léger par défaut (passe-haut + normalisation) : un débruitage agressif peut dégrader la transcription |
+| Support | PyMuPDF, python-pptx, python-docx, EasyOCR (GPU), LibreOffice | titres, puces, tableaux, notes de l'orateur ; OCR des pages qui ne sont qu'une image |
+| Transcription | faster-whisper, **Whisper large-v3 affiné en français** (`bofenghuang/whisper-large-v3-french`) | float16 sur GPU, recherche en faisceau, VAD Silero, horodatage au mot, garde-fous anti-hallucination. Le vocabulaire du support guide l'orthographe des termes techniques |
+| Intervenants | ECAPA-TDNN (SpeechBrain) + regroupement hiérarchique | nombre d'intervenants détecté automatiquement ou imposé |
+| Index | **BGE-M3** + BM25 + **BGE-reranker-v2-m3** | recherche hybride multilingue avec réordonnancement |
+| Rapprochement | programmation dynamique (Viterbi) | chaque paragraphe est rattaché à une diapositive ; la progression dans le support est favorisée |
+| Analyse | **Ollama + qwen3.5:35b-a3b** (MoE, réparti entre VRAM et RAM) ; `qwen3.5:9b` en mode rapide | analyse section par section en JSON contraint, puis synthèse du cours entier |
+
+Le profil est choisi automatiquement selon le matériel détecté (onglet système en haut à droite). Avec moins de mémoire, le modèle 9B est utilisé.
+
+### Robustesse
+
+- Les fichiers d'origine sont copiés dans `originals/` et ne sont jamais modifiés.
+- Chaque étape a une clé de cache, calculée à partir de ses entrées et de ses paramètres. Si rien n'a changé, l'étape est sautée ; si un paramètre change, seules les étapes concernées sont recalculées.
+- La transcription est enregistrée par tranches de ~10 min et l'analyse section par section. Après une coupure ou un redémarrage, le traitement reprend tout seul là où il s'était arrêté.
+- Un seul traitement lourd à la fois. Les modèles sont déchargés du GPU entre deux étapes, ce qui permet de traiter des cours de plusieurs heures.
+
+```text
+Bureau/Visual Singer/cours/<cours>/
+  project.json, state.json, job.log
+  originals/   fichiers importés (intacts)
+  work/        audio 16 kHz, version de lecture
+  cache/       résultats de chaque étape (JSON)
+  docs/        pages extraites + miniatures
+  index/       vecteurs + passages
+  exports/     rapports Markdown / Word / PDF
+```
 
 ## Identification des sons
 

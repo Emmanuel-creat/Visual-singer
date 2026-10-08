@@ -139,6 +139,50 @@ const G = {
     base: '<rect x="21.5" y="7" width="5" height="34" rx="2.5" transform="rotate(45 24 24)"/><rect x="21.5" y="7" width="5" height="34" rx="2.5" transform="rotate(-45 24 24)"/>',
     accent: '<circle cx="24" cy="24" r="3.5"/>',
   },
+  book: {
+    base: '<path d="M6 10a3 3 0 0 1 3-3h10c2.5 0 4 1.2 5 3 1-1.8 2.5-3 5-3h10a3 3 0 0 1 3 3v24a2 2 0 0 1-2 2H30c-2.5 0-4 1-6 3-2-2-3.5-3-6-3H8a2 2 0 0 1-2-2z"/>',
+    accent: '<rect x="22.5" y="11" width="3" height="27" rx="1.5"/><rect x="10" y="14" width="9" height="3" rx="1.5"/><rect x="29" y="14" width="9" height="3" rx="1.5"/>',
+  },
+  doc: {
+    base: '<path d="M10 7a3 3 0 0 1 3-3h14l11 11v26a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3z"/>',
+    accent: '<path d="M27 4v8a3 3 0 0 0 3 3h8z"/><rect x="15" y="23" width="18" height="3" rx="1.5"/><rect x="15" y="30" width="13" height="3" rx="1.5"/>',
+  },
+  slides: {
+    base: '<rect x="5" y="8" width="38" height="26" rx="4"/><rect x="22" y="34" width="4" height="7" rx="2"/>',
+    accent: '<rect x="11" y="23" width="5" height="6" rx="1.5"/><rect x="19" y="18" width="5" height="11" rx="1.5"/><rect x="27" y="14" width="5" height="15" rx="1.5"/><rect x="15" y="41" width="18" height="3" rx="1.5"/>',
+  },
+  chat: {
+    base: '<path d="M6 13a7 7 0 0 1 7-7h16a7 7 0 0 1 7 7v8a7 7 0 0 1-7 7H18l-7 6v-6.5A7 7 0 0 1 6 21z"/>',
+    accent: '<path d="M22 31h12l6 5v-5a6 6 0 0 0 4-5.6V20a6 6 0 0 0-5-6v7a10 10 0 0 1-10 10z"/>',
+  },
+  search: {
+    base: '<circle cx="21" cy="21" r="13"/><rect x="31" y="30" width="6" height="15" rx="3" transform="rotate(-45 34 37.5)"/>',
+    accent: '<circle cx="21" cy="21" r="6"/>',
+  },
+  export: {
+    base: '<path d="M8 22a3 3 0 0 1 3-3h4v4h-3v15h24V23h-3v-4h4a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3z"/>',
+    accent: '<rect x="21.75" y="5" width="4.5" height="24" rx="2.25"/><path d="M15 12l9-8 9 8z"/>',
+  },
+  upload: {
+    base: '<path d="M14 36a10 10 0 0 1-1.5-19.9A13 13 0 0 1 37.5 15 9.5 9.5 0 0 1 36 36z"/>',
+    accent: '<rect x="21.75" y="20" width="4.5" height="18" rx="2.25"/><path d="M16 25l8-8 8 8z"/>',
+  },
+  gear: {
+    base: '<path d="M21 5h6l1 5 4 2 4.5-3 4 4-3 4.5 2 4 5 1v6l-5 1-2 4 3 4.5-4 4-4.5-3-4 2-1 5h-6l-1-5-4-2-4.5 3-4-4 3-4.5-2-4-5-1v-6l5-1 2-4-3-4.5 4-4 4.5 3 4-2z"/>',
+    accent: '<circle cx="24" cy="24" r="6.5"/>',
+  },
+  check: {
+    base: '<circle cx="24" cy="24" r="17"/>',
+    accent: '<path d="M15 24.5l6 6 12-13" fill="none" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>',
+  },
+  cards: {
+    base: '<rect x="13" y="7" width="27" height="33" rx="5" transform="rotate(8 26 23)"/>',
+    accent: '<rect x="8" y="10" width="25" height="31" rx="5"/>',
+  },
+  link: {
+    base: '<path d="M20 28l8-8" fill="none" stroke-width="4.5" stroke-linecap="round"/><path d="M17 23l-4 4a6 6 0 0 0 8.5 8.5l4-4" fill="none" stroke-width="4.5" stroke-linecap="round"/>',
+    accent: '<path d="M31 25l4-4a6 6 0 0 0-8.5-8.5l-4 4" fill="none" stroke-width="4.5" stroke-linecap="round"/>',
+  },
   trash: {
     base: '<path d="M11 15h26l-2.2 24a4 4 0 0 1-4 3.6H17.2a4 4 0 0 1-4-3.6z"/>',
     accent: '<rect x="8" y="9" width="32" height="4.5" rx="2.25"/><rect x="19" y="5" width="10" height="4.5" rx="2.25"/>',
