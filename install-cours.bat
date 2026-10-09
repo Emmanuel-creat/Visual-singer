@@ -17,7 +17,7 @@ timeout /t 5 >nul
 "%OLLAMA%" pull qwen3.5:9b
 "%OLLAMA%" pull qwen3.5:35b-a3b
 echo.
-echo Installation terminee. Lancez start-cours.bat
+echo Installation terminee. Ouvrez Cours avec son raccourci du Bureau (creer-raccourcis.bat s'il manque)
 pause
 exit /b 0
 :err

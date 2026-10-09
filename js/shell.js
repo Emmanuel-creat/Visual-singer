@@ -12,6 +12,20 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const ENGINE = location.port === '8091' ? '' : 'http://127.0.0.1:8091';
 
+/** Application de bureau (app.py, fenêtre pywebview) : API Python exposée, sinon null. */
+export const desktop = () => window.pywebview?.api || null;
+
+/**
+ * Signale une activité à protéger (ex. enregistrement de nuit) : en version bureau,
+ * fermer la fenêtre demande alors confirmation. message = null pour lever la protection.
+ */
+let busyMessage = null;
+export function setBusy(message) {
+  busyMessage = message || null;
+  desktop()?.set_busy(busyMessage);
+}
+window.addEventListener('pywebviewready', () => { if (busyMessage) desktop()?.set_busy(busyMessage); });
+
 /* ------------------------------------------------------------- notifications */
 
 function region() {
@@ -229,24 +243,26 @@ export async function quitSoftware({ beforeQuit } = {}) {
   const res = await confirmDialog({
     title: 'Quitter Visual Singer ?',
     message: 'Les serveurs locaux s’arrêtent et la mémoire (RAM et GPU) est libérée. Vos cours, nuits, réglages et détections sont déjà enregistrés sur le Bureau.',
-    extra: `${busy ? '<p><strong>Une analyse de cours est en cours.</strong> Elle reprendra automatiquement au prochain lancement de start-cours.bat.</p>' : ''}
+    extra: `${busy ? '<p><strong>Une analyse de cours est en cours.</strong> Elle reprendra automatiquement au prochain lancement de Cours.</p>' : ''}
       <label class="check"><input type="checkbox" name="ollama" checked> Arrêter aussi Ollama (modèles de langage) — libère la mémoire du GPU</label>`,
     confirmLabel: 'Quitter le logiciel',
     danger: true,
   });
   if (!res.ok) return;
   await beforeQuit?.();
+  setBusy(null);
   const stopOllama = !!res.values.ollama;
   // Moteur Cours (port 8091) puis serveur des pages (port 8080) s'il sert cette page.
   if (sys) await post(`${ENGINE}/api/shutdown`, { ollama: stopOllama });
   if (location.port !== '8091') await post('api/shutdown', { ollama: stopOllama && !sys });
-  else await fetch('http://127.0.0.1:8080/api/shutdown', { method: 'POST', mode: 'no-cors', body: '{}' }).catch(() => {});   // serveur des pages lancé par start-cours.bat
+  if (desktop()) { await desktop().close_all(); return; }   // version bureau : toutes les fenêtres se ferment
+  else await fetch('http://127.0.0.1:8080/api/shutdown', { method: 'POST', mode: 'no-cors', body: '{}' }).catch(() => {});   // serveur des pages (port 8080)
   document.body.innerHTML = `
     <main class="closed-screen" id="main">
       <div>
         <h1>Visual Singer est fermé</h1>
         <p>Les serveurs locaux sont arrêtés${stopOllama ? ' et les modèles d’IA déchargés' : ''}. Vous pouvez fermer cet onglet.</p>
-        <p>Pour relancer : start.bat, start-sommeil.bat ou start-cours.bat.</p>
+        <p>Pour relancer : raccourcis « Visual Singer » du Bureau.</p>
       </div>
     </main>`;
   document.title = 'Visual Singer — fermé';
@@ -269,7 +285,34 @@ export function initShell(o = {}) {
   });
   region();
   linkAcrossServers();
+
+  // Version bureau : chaque application a sa propre fenêtre.
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    const api = desktop();
+    if (!a || !api || e.defaultPrevented) return;
+    const url = new URL(a.href, location.href);
+    const page = url.pathname.split('/').pop() || 'index.html';
+    if (url.origin !== location.origin || !APP_PAGES.includes(page)) return;
+    if (url.pathname === location.pathname) return;          // même page (ancre, fil d'Ariane) : navigation normale
+    e.preventDefault();
+    api.open_app(page);
+  });
+  // Fermeture de la fenêtre (croix) avec une activité en cours : confirmation dans la page.
+  window.vsRequestClose = async (engineBusy) => {
+    if (document.querySelector('dialog[open]')) return;
+    if (engineBusy) { await quitSoftware(o); return; }
+    const r = await confirmDialog({ title: 'Fermer cette fenêtre ?', message: busyMessage, confirmLabel: 'Arrêter et fermer', danger: true });
+    if (!r.ok) return;
+    await o.beforeQuit?.();
+    setBusy(null);
+    await desktop()?.close_window();
+  };
+  if (desktop() || 'pywebview' in window) document.documentElement.classList.add('is-desktop');
+  window.addEventListener('pywebviewready', () => document.documentElement.classList.add('is-desktop'));
 }
+
+const APP_PAGES = ['index.html', 'detecteur.html', 'sommeil.html', 'cours.html'];
 
 /**
  * Page servie par le moteur Cours (port 8091) : les autres applications ont besoin du

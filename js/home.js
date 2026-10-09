@@ -19,7 +19,7 @@ async function status() {
   for (const id of ['#stDetect', '#stSleep']) {
     const el = $(id);
     el.classList.toggle('ok', !!info);
-    el.textContent = info ? 'Sauvegarde sur le Bureau active' : 'Sauvegarde Bureau inactive (lancer start.bat)';
+    el.textContent = info ? 'Sauvegarde sur le Bureau active' : 'Sauvegarde Bureau inactive (serveur local arrêté)';
   }
   const sys = await json(`${ENGINE}/api/system`);
   const st = $('#stCours');
@@ -30,7 +30,7 @@ async function status() {
     st.textContent = sys.runner?.current ? 'Analyse en cours' : 'Moteur prêt';
     if (location.port !== '8091') $('#openCours').href = `${ENGINE}/cours.html`;
   } else {
-    $('#engineInfo').textContent = 'Arrêté. Lancer start-cours.bat (démarre le moteur d’analyse et Ollama).';
+    $('#engineInfo').textContent = 'Arrêté : il démarre automatiquement à l’ouverture de Cours.';
     st.className = 'app-status off';
     st.textContent = 'Moteur arrêté';
   }

@@ -87,10 +87,10 @@ export class IdentifyPanel {
       prog.querySelector('span').textContent = message;
     }
     btn.disabled = state === 'loading';
-    btn.innerHTML = state === 'loading' ? 'CHARGEMENT DES MODÈLES…'
-      : isRunning ? `${icon('pauseBtn', 'var(--accent)', { tile: false })} METTRE EN PAUSE`
-      : state === 'error' ? `${icon('refresh', 'var(--accent)', { tile: false })} RÉESSAYER`
-      : `${icon('play', 'var(--accent)', { tile: false })} ACTIVER L'IDENTIFICATION`;
+    btn.innerHTML = state === 'loading' ? 'Chargement des modèles…'
+      : isRunning ? `${icon('pauseBtn', 'var(--accent)', { tile: false })} Mettre en pause`
+      : state === 'error' ? `${icon('refresh', 'var(--accent)', { tile: false })} Réessayer`
+      : `${icon('play', 'var(--accent)', { tile: false })} Activer l'identification`;
     if (state === 'error') { $('#idName').textContent = 'Modèles indisponibles'; $('#idSci').textContent = message; }
   }
 

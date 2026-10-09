@@ -81,9 +81,9 @@ async function boot() {
   try {
     await loadSystem();
   } catch {
-    $('#sysPill').innerHTML = '<i style="background:#e0384a"></i><b>Moteur arrêté</b> — lancez start-cours.bat';
+    $('#sysPill').innerHTML = '<i style="background:#e0384a"></i><b>Moteur arrêté</b> — rouvrez Cours depuis son raccourci';
     $('#app').classList.add('no-project');
-    $('#emptyState p').textContent = "Le moteur d'analyse ne répond pas. Lancez start-cours.bat (ou : cours_engine\\.venv\\Scripts\\python cours_engine\\run.py), puis rechargez la page.";
+    $('#emptyState p').textContent = "Le moteur d'analyse ne répond pas. Fermez puis rouvrez Cours avec son raccourci du Bureau (il démarre le moteur et Ollama) ; journal : %LOCALAPPDATA%\\Visual Singer\\logs\\cours.log.";
     return;
   }
   await loadProjects();
@@ -795,7 +795,7 @@ async function sendChat() {
     S.chat.push({ role: 'user', content: question }, { role: 'assistant', content: text });
   } catch (e) {
     bubble.classList.remove('typing');
-    bubble.textContent = `Réponse impossible : ${e.message}. Vérifiez qu’Ollama est lancé (start-cours.bat), puis renvoyez la question.`;
+    bubble.textContent = `Réponse impossible : ${e.message}. Vérifiez qu’Ollama est lancé (il démarre avec Cours), puis renvoyez la question.`;
     input.value ||= question;
   } finally {
     send.removeAttribute('aria-busy');

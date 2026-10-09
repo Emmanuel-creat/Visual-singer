@@ -1,6 +1,6 @@
 """Lance le moteur d'analyse de cours : http://127.0.0.1:8091/cours.html
 
-    .venv\\Scripts\\python run.py            (ou start-cours.bat à la racine)
+    .venv\\Scripts\\python run.py            (normalement lancé par app.py --app cours)
 """
 import sys
 import webbrowser
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     print(f"Visual Singer — Cours  ->  {url}")
     print(f"Données               ->  {DATA_DIR}")
     if "--no-browser" not in sys.argv:
-        # start-cours.bat lance aussi le serveur des pages (port 8080, sauvegardes Bureau) :
+        # app.py lance aussi le serveur des pages (port 8080, sauvegardes Bureau) :
         # on ouvre la page servie par lui s'il répond, sinon celle du moteur.
         import threading
         import urllib.request

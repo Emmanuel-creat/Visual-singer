@@ -6,7 +6,7 @@
   <title>Visual Singer — Accueil</title>
   <meta name="description" content="Suite d'analyse acoustique locale : détection des sons, surveillance du sommeil, analyse de cours.">
   <meta name="theme-color" content="#2a2b2f">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a2b2f'/%3E%3Cpath d='M7 16h2M11 11v10M15 7v18M19 12v8M23 14v4' stroke='%23ff4d3d' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/png" href="assets/icons/accueil.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/sommeil.css">
   <link rel="stylesheet" href="css/ux.css">
@@ -52,7 +52,7 @@
         </dl>
         <div class="app-actions">
           <a class="btn btn-primary" href="detecteur.html">Ouvrir le détecteur</a>
-          <span class="app-status" id="stDetect">Lanceur : start.bat</span>
+          <span class="app-status" id="stDetect">Vérification…</span>
         </div>
       </article>
 
@@ -68,7 +68,7 @@
         </dl>
         <div class="app-actions">
           <a class="btn btn-primary" href="sommeil.html">Ouvrir Sommeil</a>
-          <span class="app-status" id="stSleep">Lanceur : start-sommeil.bat</span>
+          <span class="app-status" id="stSleep">Vérification…</span>
         </div>
       </article>
 
@@ -84,7 +84,7 @@
         </dl>
         <div class="app-actions">
           <a class="btn btn-primary" href="cours.html" id="openCours">Ouvrir Cours</a>
-          <span class="app-status" id="stCours">Lanceur : start-cours.bat</span>
+          <span class="app-status" id="stCours">Vérification…</span>
         </div>
       </article>
     </section>
@@ -92,8 +92,8 @@
     <section class="home-foot">
       <h2>Démarrer et arrêter</h2>
       <ul>
-        <li><strong>start.bat</strong> ouvre cette page ; <strong>start-sommeil.bat</strong> ouvre directement Sommeil ; <strong>start-cours.bat</strong> démarre en plus le moteur d'analyse de cours et Ollama.</li>
-        <li>Le bouton <strong>Quitter</strong> (en haut à droite, sur toutes les pages) arrête les serveurs locaux et libère la mémoire du GPU.</li>
+        <li>Chaque outil a son <strong>raccourci sur le Bureau</strong> et s'ouvre dans sa propre fenêtre ; les services locaux démarrent tout seuls (le moteur d'analyse et Ollama seulement pour Cours). Raccourcis absents : lancer <strong>creer-raccourcis.bat</strong>.</li>
+        <li>Fermer la dernière fenêtre arrête les services. Le bouton <strong>Quitter</strong> (en haut à droite, partout) ferme toutes les fenêtres, arrête les serveurs locaux et libère la mémoire du GPU.</li>
         <li>Touche <kbd>?</kbd> : raccourcis clavier de la page courante.</li>
       </ul>
     </section>

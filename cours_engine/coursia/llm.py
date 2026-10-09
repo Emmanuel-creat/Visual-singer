@@ -46,7 +46,7 @@ def pick_model(profile: str = "quality") -> str:
     rec = recommend()
     names = models_available()
     if not names:
-        raise LLMError("Ollama ne répond pas : lancez Ollama (ou start-cours.bat) puis réessayez.")
+        raise LLMError("Ollama ne répond pas : lancez Ollama (ou rouvrez Cours depuis son raccourci) puis réessayez.")
     want = rec["llm_quality"] if profile == "quality" else rec["llm_fast"]
     for cand in (want, rec["llm_quality"], rec["llm_fast"]):
         if cand in names:

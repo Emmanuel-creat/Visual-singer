@@ -1,5 +1,4 @@
 @echo off
+rem Visual Singer - accueil (fenetre native ; les services locaux demarrent tout seuls)
 cd /d "%~dp0"
-echo Visual Singer - les sauvegardes vont dans "Bureau\Visual Singer"
-python server.py
-if errorlevel 1 pause
+start "" pythonw app.py --app accueil

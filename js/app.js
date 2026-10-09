@@ -106,7 +106,7 @@ async function boot() {
   document.getElementById('dataDir').title = store.dataDir;
   storeNote.textContent = store.available
     ? 'Les réglages, thèmes, détections et extraits sont enregistrés dans ce dossier.'
-    : "Sauvegarde Bureau indisponible : lancez l'appli avec « python server.py » (ou start.bat) au lieu de « python -m http.server ».";
+    : "Sauvegarde Bureau indisponible : lancez l'appli avec son raccourci du Bureau (ou « python app.py ») au lieu de « python -m http.server ».";
   if (store.available) identify.setPast(await store.loadDetections());
 
   // L'analyse démarre dès que l'audio est actif (si l'option est cochée).

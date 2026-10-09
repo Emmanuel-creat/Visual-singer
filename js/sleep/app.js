@@ -17,7 +17,7 @@ import { TimeChart, BarChart, LaneChart, ringGauge, hbarList, calendarHeat, qual
 import { qColor, qLabel, lin, METRIC_Q, SERIES_Q } from './quality.js';
 import { demoNight } from './demo.js';
 import { icon, hydrateIcons } from '../icons.js';
-import { initShell, bindTabs as shellTabs, hashParams, setHashParam, toast, confirmDialog } from '../shell.js';
+import { initShell, bindTabs as shellTabs, hashParams, setHashParam, toast, confirmDialog, setBusy } from '../shell.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -62,7 +62,7 @@ async function boot() {
   for (const el of $$('[data-qlegend]')) qualityLegend(el);
   await store.init();
   $('#storeWarn').hidden = store.available;
-  $('#dataDir').textContent = store.available ? `Dossier : ${store.dataDir}\\sommeil` : 'Sauvegarde Bureau indisponible (lancez start-sommeil.bat)';
+  $('#dataDir').textContent = store.available ? `Dossier : ${store.dataDir}\\sommeil` : 'Sauvegarde Bureau indisponible (serveur local arrêté : rouvrez Sommeil depuis son raccourci)';
   $('#clipBudget').value = String(cfg.clipsPerCategory);
   $('#clipBudget').addEventListener('change', (e) => { cfg.clipsPerCategory = Number(e.target.value); storage.set(SLEEP_CFG_KEY, cfg); });
 
@@ -238,6 +238,7 @@ function setRecUi(state) {
   b.classList.toggle('loading', state === 'loading' || state === 'saving');
   $('#btnRecLabel').textContent = { idle: 'Démarrer la nuit', loading: 'Préparation…', recording: 'Terminer la nuit', saving: 'Enregistrement…' }[state];
   $('#recPill').hidden = state !== 'recording';
+  setBusy(state === 'recording' ? 'Un enregistrement de nuit est en cours : il sera terminé, analysé et sauvegardé avant la fermeture.' : null);
   if (state === 'recording') $('#liveStart').textContent = clockAt(monitor.night.start, 0);
   fillNightSelect();
 }

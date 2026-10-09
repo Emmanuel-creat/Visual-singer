@@ -395,12 +395,12 @@ export class UI {
   _renderServer(d) {
     const st = $('#tbStatus');
     st.dataset.state = d.status;
-    st.textContent = d.status.toUpperCase();
+    st.textContent = ({ online: 'En ligne', offline: 'Hors ligne', starting: 'Démarrage', stopping: 'Arrêt' })[d.status] || d.status;
     $('#tbPlayers').textContent = `${d.players.online} / ${d.players.max || '—'}`;
     $('#tbTps').textContent = d.tps != null ? `${d.tps.toFixed(1)} TPS` : '— TPS';
     $('#tbTps').style.color = d.tps == null ? '' : d.tps >= 19 ? 'var(--ok)' : d.tps >= 15 ? 'var(--warn)' : 'var(--err)';
     $('#tbCpu').textContent = d.cpu != null ? `${Math.round(d.cpu)}%` : '—';
-    $('#tbRam').textContent = d.ram.used != null ? `${d.ram.used.toFixed(1)}${d.ram.max ? ` / ${d.ram.max}` : ''} GB` : '—';
+    $('#tbRam').textContent = d.ram.used != null ? `${d.ram.used.toFixed(1)}${d.ram.max ? ` / ${d.ram.max}` : ''} Go` : '—';
     $('#srvName').textContent = d.name;
     $('#srvVersion').textContent = d.version || '—';
     $('#srvUptime').textContent = d.uptime != null ? formatClock(d.uptime, 0) : '—';

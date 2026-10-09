@@ -14,7 +14,7 @@ L'interface adopte un style néomorphique sombre. Elle inclut aussi un panneau d
 
 ## Lancement
 
-Double-clic sur **`start.bat`** (Windows), ou :
+Lancer une fois **`creer-raccourcis.bat`** : il crée sur le Bureau (et dans le menu Démarrer) un raccourci par application, avec son icône. Chaque raccourci ouvre l'outil dans **sa propre fenêtre Windows** (pywebview / Edge WebView2, sans navigateur ni console) et démarre seul les services nécessaires. `start.bat` ouvre l'accueil de la même façon. Pour le développement :
 
 ```bash
 python server.py
@@ -41,12 +41,18 @@ Tout est embarqué (Three.js, TensorFlow.js, modèles) : aucun service cloud. Il
 
 | Page | Lanceur | Usage |
 |------|---------|-------|
-| `index.html` — **Accueil** | `start.bat` | présentation des trois outils, état des services locaux (sauvegarde Bureau, moteur Cours, GPU, LLM) |
-| `detecteur.html` — **Détecteur** | depuis l'accueil | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
-| `sommeil.html` — **Sommeil** | `start-sommeil.bat` | surveillance acoustique de la nuit, statistiques, interprétations, historique |
-| `cours.html` — **Cours** | `start-cours.bat` | transcription, résumés, notions et croisement d'un cours audio/vidéo avec son support |
+| `index.html` — **Accueil** | raccourci *Visual Singer - Accueil* | présentation des trois outils, état des services locaux (sauvegarde Bureau, moteur Cours, GPU, LLM) |
+| `detecteur.html` — **Détecteur** | raccourci *Visual Singer - Détecteur* | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
+| `sommeil.html` — **Sommeil** | raccourci *Visual Singer - Sommeil* | surveillance acoustique de la nuit, statistiques, interprétations, historique |
+| `cours.html` — **Cours** | raccourci *Visual Singer - Cours* | transcription, résumés, notions et croisement d'un cours audio/vidéo avec son support |
 
-Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. `start-cours.bat` démarre aussi le serveur des pages (fenêtre réduite), pour que les trois applications soient accessibles en même temps.
+Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. ### Application de bureau (`app.py`)
+
+- Une fenêtre native par outil, avec son icône dans la barre des tâches (`assets/icons/*.ico`, rendues depuis `js/icons.js` par `tools/render-icon.html` + `tools/make_icons.py`). Relancer un raccourci remet la fenêtre existante au premier plan ; le sélecteur d'application de l'en-tête ouvre l'outil voulu dans sa fenêtre.
+- Services démarrés en arrière-plan, sans console : `server.py` (port 8080) pour toutes ; Ollama puis le moteur d'analyse (port 8091) pour Cours. Journaux : `%LOCALAPPDATA%\Visual Singer\logs`.
+- Micro autorisé d'office pour les pages locales ; exports (Word, PDF, CSV) via la boîte « Enregistrer sous ».
+- Fermer la dernière fenêtre arrête les services (Ollama seulement s'il a été démarré par Visual Singer). Une fenêtre avec une activité en cours (enregistrement de nuit, analyse de cours) demande confirmation avant de se fermer.
+- Prérequis : Python 3 avec `pywebview` (installé par `creer-raccourcis.bat` si absent).
 
 ### Navigation et ergonomie communes
 
@@ -59,7 +65,7 @@ Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegard
 
 ## Application Sommeil
 
-Lancer `start-sommeil.bat`, cliquer sur **Démarrer la nuit** et laisser l'onglet ouvert, ordinateur branché. L'écran reste allumé ; le **Mode nuit** affiche un écran noir avec une horloge discrète. Le matin, cliquer sur **Terminer la nuit**.
+Ouvrir **Visual Singer - Sommeil**, cliquer sur **Démarrer la nuit** et laisser la fenêtre ouverte, ordinateur branché. L'écran reste allumé ; le **Mode nuit** affiche un écran noir avec une horloge discrète. Le matin, cliquer sur **Terminer la nuit**.
 
 Chaque seconde, le son est classé par YAMNet. Le moteur reconstitue ensuite les épisodes, le niveau sonore et le rythme respiratoire :
 
@@ -122,7 +128,7 @@ PyTorch **cu128** est indispensable pour les cartes RTX 50xx (Blackwell). LibreO
 
 ### Lancement
 
-Double-clic sur **`start-cours.bat`** : il démarre Ollama et le moteur, puis ouvre **http://127.0.0.1:8091/cours.html**.
+Ouvrir **Visual Singer - Cours** : le lanceur démarre Ollama et le moteur, puis affiche Cours dans sa fenêtre (la page reste accessible sur **http://127.0.0.1:8091/cours.html**).
 Le moteur sert aussi les deux autres applications sur ce port.
 
 ### Utilisation
