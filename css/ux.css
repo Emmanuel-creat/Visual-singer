@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Visual Singer — couche d'ergonomie commune (chargée en dernier sur toutes les pages)
+
+   Principes : texte courant 16 px (interligne 1,6), rien sous 12 px ; contraste
+   WCAG AA ; espacements multiples de 8 px ; une action principale par zone ;
+   états visibles (survol, appui, focus, désactivé, occupé) ; animations brèves
+   et uniquement pour signaler un changement d'état.
+   ========================================================================== */
+
+:root {
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 24px;
+  --sp-5: 32px;
+  --sp-6: 48px;
+  --gap: 16px;
+  --on-accent: #141518;          /* texte sur bouton coloré : contraste ≥ 4,5:1 */
+  --focus: #f5f5f7;
+  --prose: 72ch;                 /* largeur de lecture : 60–80 caractères */
+  line-height: 1.5;
+}
+
+body { font-size: 1rem; line-height: 1.5; }
+p { line-height: 1.6; }
+kbd {
+  font-family: var(--font-num); font-size: 0.75rem; padding: 1px 6px; border-radius: 6px;
+  background: var(--raised); box-shadow: var(--neu-out-sm); color: var(--text);
+}
+
+/* ------------------------------------------------------------ accessibilité */
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: fixed; left: var(--sp-3); top: -64px; z-index: 200;
+  padding: var(--sp-2) var(--sp-3); border-radius: 10px;
+  background: var(--text); color: var(--bg); font-weight: 600; text-decoration: none;
+  transition: top .15s;
+}
+.skip-link:focus { top: var(--sp-3); }
+:focus-visible { outline: 2px solid var(--focus) !important; outline-offset: 2px !important; border-radius: 6px; }
+[hidden] { display: none !important; }
+
+/* ------------------------------------------------------------------ boutons */
+.btn, .icon-btn, .toolbar button, .cam-bar button, .btn-mic, .primary-btn {
+  min-height: 2.5rem;            /* 40 px ; 44 px au doigt (voir plus bas) */
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.icon-btn { min-width: 2.5rem; }
+.btn:hover:not(:disabled), .icon-btn:hover:not(:disabled) { color: var(--text); background: color-mix(in srgb, var(--raised), white 4%); }
+.btn:active:not(:disabled), .icon-btn:active:not(:disabled) { box-shadow: var(--neu-in-sm); transform: translateY(1px); }
+.btn:disabled, .icon-btn:disabled, button:disabled, .primary-btn:disabled, .btn-mic:disabled {
+  opacity: 0.45 !important; cursor: not-allowed !important; transform: none !important; filter: none !important;
+}
+/* Action principale : une seule par zone, texte foncé sur l'accent. */
+.btn-primary, .primary-btn, .transport .primary {
+  background: var(--accent) !important; color: var(--on-accent) !important;
+  box-shadow: 3px 3px 10px var(--sh-dark), 0 0 0 1px color-mix(in srgb, var(--accent), white 20%) inset !important;
+}
+.btn-primary:hover:not(:disabled), .primary-btn:hover:not(:disabled) { filter: brightness(1.08); color: var(--on-accent) !important; }
+.btn-primary .gi, .primary-btn .gi { filter: none; }
+.btn-ghost { background: transparent !important; box-shadow: none !important; }
+.btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 6%, transparent) !important; }
+.btn-danger { color: #ff8a96 !important; }
+.btn-danger:hover:not(:disabled) { background: rgba(224, 56, 74, 0.14) !important; }
+/* Action en cours : indicateur discret, double envoi impossible. */
+[aria-busy="true"] { position: relative; pointer-events: none; }
+button[aria-busy="true"]::after {
+  content: ""; width: 0.9em; height: 0.9em; margin-left: var(--sp-2); border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent; display: inline-block;
+  animation: ux-spin .7s linear infinite; vertical-align: -0.12em;
+}
+@keyframes ux-spin { to { transform: rotate(360deg); } }
+
+/* Cibles tactiles confortables. */
+@media (pointer: coarse) {
+  .btn, .icon-btn, .toolbar button, .cam-bar button, .btn-mic, .primary-btn, .s-tabs button,
+  .app-switch a, select, input[type="text"], input[type="number"], input[type="search"] { min-height: 44px; }
+  .icon-btn { min-width: 44px; }
+}
+
+/* ------------------------------------------------------- en-tête commun */
+.shell-brand { display: flex; align-items: center; gap: var(--sp-2); color: inherit; text-decoration: none; border-radius: 12px; }
+.shell-brand:hover .brand-text b { color: var(--accent); }
+.app-switch {
+  display: flex; gap: var(--sp-1); padding: var(--sp-1); border-radius: 14px; box-shadow: var(--neu-in-sm); flex: none;
+}
+.app-switch a {
+  display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 2.25rem;
+  padding: 0 var(--sp-3); border-radius: 10px; color: var(--muted); text-decoration: none;
+  font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+}
+.app-switch a .gi { width: 1.2em; height: 1.2em; }
+.app-switch a:hover { color: var(--text); }
+.app-switch a[aria-current="page"] { color: var(--text); background: var(--raised); box-shadow: var(--neu-out-sm); }
+.shell-actions { display: flex; align-items: center; gap: var(--sp-2); flex: none; }
+.btn-quit { color: var(--muted) !important; }
+.btn-quit:hover:not(:disabled) { color: #ff8a96 !important; }
+.btn-quit .q-ico { font-size: 1rem; line-height: 1; }
+.local-badge { font-size: 0.75rem; color: var(--dim); display: inline-flex; align-items: center; gap: var(--sp-1); white-space: nowrap; }
+.local-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #14a88a; }
+
+/* Fil d'Ariane */
+.breadcrumb { font-size: 0.8125rem; color: var(--dim); padding: 0 var(--gap) var(--sp-2); }
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: var(--sp-1); margin: 0; padding: 0; }
+.breadcrumb li + li::before { content: "›"; margin-right: var(--sp-1); color: var(--dim); }
+.breadcrumb a, .breadcrumb button { color: var(--muted); text-decoration: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+.breadcrumb a:hover, .breadcrumb button:hover { color: var(--text); text-decoration: underline; }
+.breadcrumb [aria-current="page"] { color: var(--text); }
+
+/* Onglets : état actif visible sans dépendre de la couleur seule. */
+.s-tabs button[aria-selected="true"], .s-tabs button.on { box-shadow: var(--neu-out-sm), inset 0 -2px 0 var(--accent); }
+
+/* ------------------------------------------------------------ dialogues */
+dialog.ux-dialog {
+  border: 0; padding: 0; border-radius: 20px; max-width: min(34rem, calc(100vw - 32px)); width: 100%;
+  background: var(--raised); color: var(--text);
+  box-shadow: 16px 16px 40px rgba(0, 0, 0, 0.55), -4px -4px 16px var(--sh-light);
+}
+dialog.ux-dialog::backdrop { background: rgba(10, 10, 12, 0.6); backdrop-filter: blur(3px); }
+.ux-dialog form { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
+.ux-dialog h2 { margin: 0; font-size: 1.15rem; font-weight: 650; }
+.ux-dialog p { margin: 0; color: var(--muted); max-width: var(--prose); }
+.ux-dialog .field { margin: 0; font-size: 0.875rem; color: var(--text); }
+.ux-dialog .field input { height: 2.75rem; font-size: 1rem; font-family: var(--font-ui); }
+.ux-dialog .hint { font-size: 0.8125rem; color: var(--dim); }
+.ux-dialog .error { font-size: 0.8125rem; color: #ff8a96; }
+.ux-dialog .actions { display: flex; justify-content: flex-end; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
+.ux-dialog .check { font-size: 0.875rem; color: var(--text); }
+.ux-dialog table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+.ux-dialog td { padding: 6px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+.ux-dialog td:first-child { white-space: nowrap; width: 1%; }
+.ux-dialog .sc-group { font-size: 0.75rem; color: var(--dim); padding-top: var(--sp-3); }
+
+/* ---------------------------------------------------------- notifications */
+.toast-region {
+  position: fixed; left: 50%; bottom: var(--sp-4); translate: -50% 0; z-index: 150;
+  display: flex; flex-direction: column; gap: var(--sp-2); align-items: center; pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+.ux-toast {
+  pointer-events: auto; display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3); border-radius: 14px;
+  background: color-mix(in srgb, var(--raised), black 10%); color: var(--text);
+  box-shadow: 8px 8px 22px rgba(0, 0, 0, 0.5); font-size: 0.875rem; max-width: 40rem;
+  animation: ux-in .18s ease-out;
+}
+.ux-toast.err { box-shadow: 8px 8px 22px rgba(0, 0, 0, 0.5), inset 3px 0 0 #e0384a; }
+.ux-toast.ok { box-shadow: 8px 8px 22px rgba(0, 0, 0, 0.5), inset 3px 0 0 #14a88a; }
+.ux-toast .btn { min-height: 2rem; }
+@keyframes ux-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Écran « logiciel fermé » */
+.closed-screen {
+  position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: var(--bg);
+  text-align: center; padding: var(--sp-4);
+}
+.closed-screen h1 { margin: 0 0 var(--sp-2); font-size: 1.5rem; }
+.closed-screen p { margin: 0 auto var(--sp-2); color: var(--muted); max-width: 40ch; }
+
+/* --------------------------------------------- méthode, texte de lecture */
+details.method { border-radius: 14px; box-shadow: var(--neu-in-sm); padding: var(--sp-2) var(--sp-3); font-size: 0.875rem; }
+details.method summary { cursor: pointer; color: var(--muted); font-weight: 600; padding: var(--sp-1) 0; }
+details.method[open] summary { margin-bottom: var(--sp-2); }
+details.method p, details.method li { color: var(--muted); max-width: var(--prose); line-height: 1.6; }
+details.method ul { padding-left: 1.2rem; margin: var(--sp-1) 0; }
+.md, .interp-item p, .sec-card p, .gl-item p, .card p, .empty-state, .c-empty p { max-width: var(--prose); }
+.md { font-size: 1rem; line-height: 1.65; }
+.tp p { font-size: 1rem; line-height: 1.65; }
+.interp-item p { font-size: 0.9375rem; line-height: 1.6; }
+.msg .bubble { font-size: 1rem; line-height: 1.6; }
+
+/* Moins d'animations permanentes : seule l'indication d'enregistrement pulse. */
+.dot.on, .mode-badge[data-mode="live"] .mb-dot, .transport .live.on .live-dot, .steps li.running .sd { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .rec-pill i, .rec-btn.recording .rec-ico, .typing::after { animation: none !important; }
+}
+
+/* Bandeau de page d'erreur / état vide */
+.empty-help { color: var(--muted); font-size: 0.9375rem; line-height: 1.6; }
+.empty-help ul { margin: var(--sp-2) 0 0; padding-left: 1.2rem; }
+
+@media (max-width: 1100px) { .local-badge, [data-shortcuts] .nav-lbl { display: none; } }
+/* Petits écrans : icônes seules, libellés conservés pour les lecteurs d'écran */
+@media (max-width: 640px) {
+  .app-switch a span.nav-lbl, .btn-quit .nav-lbl {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .app-switch a { padding: 0 var(--sp-2); }
+}
+
+/* Détecteur : la supervision serveur cède la place à la navigation sur écrans moyens */
+@media (max-width: 1500px) { .hide-xl { display: none !important; } }
+.topbar .app-switch { margin-left: var(--sp-2); }
+.topbar .shell-actions { margin-left: var(--sp-1); }
+.transport .primary:hover:not(:disabled) { color: var(--on-accent); }
+
+/* Détecteur : barre du haut dense — on replie progressivement */
+@media (max-width: 1280px) {
+  .topbar .app-switch .nav-lbl, .topbar .btn-quit .nav-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .topbar .app-switch a { padding: 0 var(--sp-2); }
+}
+@media (max-width: 1000px) { .topbar .stat-group { display: none; } }
+
+/* En-têtes Sommeil / Cours : jamais de défilement horizontal de la page */
+.s-top { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.s-bar { min-width: 0; max-width: 100%; }
+.s-bar .s-tabs { min-width: 0; flex: 1 1 auto; }
+@media (max-width: 760px) {
+  .s-top .sys-pill { display: none; }
+  .s-top .shell-brand .brand-text span { display: none; }
+  .s-bar .night-pick { flex-basis: 100%; }
+  .s-bar .night-pick select { min-width: 0; flex: 1; }
+}
+@media (max-width: 600px) {
+  .topbar { gap: var(--sp-2); }
+  .topbar .brand-text, .topbar [data-shortcuts] { display: none; }
+  .topbar .app-switch { margin-left: 0; }
+  .topbar .topbar-right { gap: var(--sp-1); }
+}

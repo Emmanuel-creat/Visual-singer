@@ -49,7 +49,7 @@ export class IdentifyPanel {
     });
     for (const b of document.querySelectorAll('[data-tab]')) {
       b.addEventListener('click', () => {
-        for (const x of document.querySelectorAll('[data-tab]')) x.classList.toggle('on', x === b);
+        for (const x of document.querySelectorAll('[data-tab]')) { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', String(x === b)); }
         for (const p of document.querySelectorAll('[data-tab-pane]')) p.hidden = p.dataset.tabPane !== b.dataset.tab;
       });
     }
@@ -80,7 +80,7 @@ export class IdentifyPanel {
     const dot = $('#idDot'), st = $('#idState'), btn = $('#btnRecog'), prog = $('#idProgress');
     const isRunning = running ?? r.running;
     dot.className = `dot ${state === 'ready' && isRunning ? 'on' : state === 'loading' ? 'warn' : state === 'error' ? 'err' : ''}`;
-    st.textContent = state === 'loading' ? 'CHARGEMENT' : state === 'error' ? 'ERREUR' : state === 'ready' ? (isRunning ? 'ACTIVE' : 'EN PAUSE') : 'INACTIVE';
+    st.textContent = state === 'loading' ? 'Chargement' : state === 'error' ? 'Erreur' : state === 'ready' ? (isRunning ? 'Active' : 'En pause') : 'Inactive';
     prog.hidden = state !== 'loading';
     if (state === 'loading') {
       prog.querySelector('i').style.transform = `scaleX(${progress ?? 0})`;

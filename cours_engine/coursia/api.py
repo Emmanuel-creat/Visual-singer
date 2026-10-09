@@ -101,8 +101,21 @@ async def update_project(pid: str, req: Request):
 def remove_project(pid: str):
     _project(pid)
     get_runner().cancel(pid)
-    delete_project(pid)
-    return {"ok": True}
+    trashed = delete_project(pid)
+    return {"ok": True, "trash": trashed}
+
+
+@app.post("/api/trash/{name}/restore")
+def restore_project(name: str):
+    """Annule une suppression : le cours revient de la corbeille."""
+    from .store import restore_project as _restore
+    try:
+        pid = _restore(name)
+    except FileNotFoundError:
+        raise HTTPException(404, "Élément introuvable dans la corbeille")
+    except FileExistsError:
+        raise HTTPException(409, "Un cours portant cet identifiant existe déjà")
+    return {"ok": True, "id": pid}
 
 
 async def _save_upload(f: UploadFile, dest: Path) -> None:
@@ -235,6 +248,59 @@ def words(pid: str, start: float = 0, end: float = 1e9):
     return [{"id": s["id"], "words": s.get("words", [])} for s in tr.get("segments", []) if s["end"] >= start and s["start"] <= end]
 
 
+@app.get("/api/projects/{pid}/captions.vtt")
+def captions(pid: str):
+    """Sous-titres WebVTT générés depuis la transcription (accessibilité des vidéos)."""
+    from fastapi.responses import PlainTextResponse
+    tr = _project(pid).result("transcribe") or {}
+
+    def ts(t: float) -> str:
+        h, rem = divmod(max(0.0, t), 3600)
+        m, s_ = divmod(rem, 60)
+        return f"{int(h):02d}:{int(m):02d}:{s_:06.3f}"
+
+    lines = ["WEBVTT", ""]
+    for seg in tr.get("segments", []):
+        text = seg["text"].strip()
+        # Sous-titres de 2 lignes max : découpe des segments longs sur les mots.
+        words = seg.get("words") or []
+        if len(text) > 84 and words:
+            chunk, start = [], words[0]["s"]
+            for w in words:
+                chunk.append(w["w"])
+                if len("".join(chunk)) > 80:
+                    lines += [f"{ts(start)} --> {ts(w['e'])}", "".join(chunk).strip(), ""]
+                    chunk, start = [], w["e"]
+            if chunk:
+                lines += [f"{ts(start)} --> {ts(seg['end'])}", "".join(chunk).strip(), ""]
+        else:
+            lines += [f"{ts(seg['start'])} --> {ts(seg['end'])}", text, ""]
+    return PlainTextResponse("\n".join(lines), media_type="text/vtt; charset=utf-8")
+
+
+@app.post("/api/shutdown")
+async def shutdown(req: Request):
+    """Bouton « Quitter le logiciel » : libère les modèles puis arrête le moteur."""
+    import os
+    import subprocess
+    import sys
+    import threading
+    try:
+        body = await req.json()
+    except Exception:
+        body = {}
+    retrieval.release()
+    llm.unload_all()
+    if body.get("ollama"):
+        if sys.platform == "win32":
+            for exe in ("ollama app.exe", "ollama.exe"):
+                subprocess.run(["taskkill", "/IM", exe, "/F"], capture_output=True)
+        else:
+            subprocess.run(["pkill", "-f", "ollama"], capture_output=True)
+    threading.Timer(0.4, lambda: os._exit(0)).start()
+    return {"ok": True}
+
+
 @app.get("/api/projects/{pid}/file/{path:path}")
 def file(pid: str, path: str):
     p = _project(pid)
@@ -324,5 +390,14 @@ async def export(pid: str, req: Request):
     return FileResponse(path, filename=path.name)
 
 
-# Pages de Visual Singer (cours.html, sommeil.html, index.html…).
+# Pages de Visual Singer (index.html, detecteur.html, sommeil.html, cours.html…).
 app.mount("/", StaticFiles(directory=str(APP_ROOT), html=True), name="app")
+
+
+@app.exception_handler(404)
+async def not_found(request: Request, exc):
+    """Page 404 compréhensible pour les pages ; erreur JSON pour l'API."""
+    from fastapi.responses import HTMLResponse
+    if request.url.path.startswith("/api/") or not (APP_ROOT / "404.html").exists():
+        return JSONResponse({"detail": getattr(exc, "detail", "Introuvable")}, status_code=404)
+    return HTMLResponse((APP_ROOT / "404.html").read_text(encoding="utf-8"), status_code=404)

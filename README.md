@@ -41,11 +41,21 @@ Tout est embarqué (Three.js, TensorFlow.js, modèles) : aucun service cloud. Il
 
 | Page | Lanceur | Usage |
 |------|---------|-------|
-| `index.html` — **Détecteur** | `start.bat` | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
+| `index.html` — **Accueil** | `start.bat` | présentation des trois outils, état des services locaux (sauvegarde Bureau, moteur Cours, GPU, LLM) |
+| `detecteur.html` — **Détecteur** | depuis l'accueil | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
 | `sommeil.html` — **Sommeil** | `start-sommeil.bat` | surveillance acoustique de la nuit, statistiques, interprétations, historique |
 | `cours.html` — **Cours** | `start-cours.bat` | transcription, résumés, notions et croisement d'un cours audio/vidéo avec son support |
 
-Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. Un lien dans la barre du haut permet de passer de l'une à l'autre.
+Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. `start-cours.bat` démarre aussi le serveur des pages (fenêtre réduite), pour que les trois applications soient accessibles en même temps.
+
+### Navigation et ergonomie communes
+
+- **Même en-tête partout** : logo → accueil, sélecteur Détecteur / Sommeil / Cours (page active indiquée), raccourcis clavier (touche `?`), bouton **Quitter**.
+- **Quitter** ferme complètement le logiciel : arrêt du serveur des pages (8080) et du moteur Cours (8091), libération de la mémoire GPU, et en option arrêt d'Ollama. Une analyse de cours en cours reprend au prochain lancement.
+- **Onglets dans l'adresse** (`#onglet=…`, `#cours=…`, `#nuit=…`) : le bouton Retour du navigateur revient à l'onglet ou au cours précédent, et une adresse peut être mise en favori. Fil d'Ariane sous l'en-tête.
+- **Actions irréversibles confirmées**, suppression vers une corbeille avec **Annuler** (cours, nuits, thèmes) ; boutons désactivés pendant un traitement (pas de double envoi).
+- **Accessibilité** : contrastes WCAG AA (texte ≥ 4,5:1, boutons d'accent en texte sombre), taille de base 15–18 px, focus visible, navigation au clavier (flèches dans les onglets), lien d'évitement, libellés de formulaires, régions annoncées aux lecteurs d'écran, sous-titres WebVTT générés pour les vidéos de cours, `prefers-reduced-motion` respecté, aucune information portée par la seule couleur (valeur chiffrée toujours affichée).
+- **Méthode explicitée** : Sommeil détaille ses critères (actigraphie, pauses ≥ 10 s, autocorrélation respiratoire, L90/L50/L10, seuils de couleur) dans « Méthode et limites » ; tableaux exportables en CSV.
 
 ## Application Sommeil
 
@@ -243,7 +253,11 @@ Timeline : molette pour le zoom temporel, `Maj` + molette pour défiler, double-
 ## Architecture
 
 ```text
-index.html              structure de l'interface
+index.html              accueil (présentation, état des services)
+detecteur.html          structure de l'interface du détecteur
+404.html                page d'erreur (liens vers les applications)
+css/ux.css              règles communes : espacements 8 px, boutons et états, focus, dialogues, notifications, responsive
+js/shell.js             en-tête commun : dialogues, notifications avec Annuler, onglets accessibles + URL, raccourcis, Quitter
 css/style.css           thème néomorphique (variables CSS pilotées par theme.js)
 js/app.js               point d'entrée + boucle requestAnimationFrame
 js/audio.js             capture micro, analyse FFT, détection de pics, synthé de démo

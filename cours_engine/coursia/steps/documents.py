@@ -24,7 +24,7 @@ from pathlib import Path
 
 from ..store import Project, cache_key, write_json
 
-VERSION = "docs-v1"
+VERSION = "docs-v2"
 OCR_MIN_CHARS = 40
 THUMB_WIDTH = 1280
 
@@ -97,7 +97,9 @@ def _render(page, path: Path, width: int = THUMB_WIDTH) -> bytes:
     zoom = width / max(1, page.rect.width)
     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
     path.parent.mkdir(parents=True, exist_ok=True)
-    pix.save(str(path))
+    # WebP (qualité 82) : 3 à 5 fois plus léger que le PNG, chargement plus rapide des miniatures.
+    from PIL import Image
+    Image.frombytes("RGB", (pix.width, pix.height), pix.samples).save(str(path), "WEBP", quality=82, method=4)
     return pix.tobytes("png")
 
 
@@ -125,8 +127,8 @@ def extract_pdf(path: Path, doc_id: str, outdir: Path, ctx, kind: str = "page", 
                         tables.append(md)
             except Exception:
                 pass
-            img_rel = f"docs/{doc_id}/p{i + 1:03d}.png"
-            png = _render(page, outdir / f"p{i + 1:03d}.png")
+            img_rel = f"docs/{doc_id}/p{i + 1:03d}.webp"
+            png = _render(page, outdir / f"p{i + 1:03d}.webp")
             ocr = False
             if len(text) < OCR_MIN_CHARS:
                 ocr_text = _ocr(png)

@@ -24,6 +24,7 @@ import { IdentifyPanel } from './identify-panel.js';
 import { DesktopStore } from './persist.js';
 import { CATEGORIES } from './sound-labels.js';
 import { icon, hydrateIcons } from './icons.js';
+import { initShell } from './shell.js';
 import { clamp, damp, debounce } from './utils.js';
 
 async function boot() {
@@ -51,6 +52,16 @@ async function boot() {
   const timeline = new Timeline(document.getElementById('timeline'), history, transport, settings);
   const server = new ServerConnector(settings);
   const ui = new UI({ settings, theme, audio, history, transport, viz, timeline, server });
+  initShell({
+    beforeQuit: async () => { try { audio.stop(); } catch { /* déjà arrêté */ } },
+    shortcuts: [
+      ['Espace', 'Lecture / pause'], ['L', 'Retour au direct'],
+      ['← / →', 'Reculer / avancer de 1 s (Maj : 5 s)'], ['J / K', 'Retour arrière / avance rapide'],
+      ['[ / ]', 'Vitesse de lecture'], ['1 2 3 4', 'Vues dessus · face · côté · 3D'], ['R', 'Réinitialiser la caméra'],
+      ['V', 'Vue caméra suivante'], ['A', 'Rotation automatique'], ['T', 'Mode de traînée suivant'],
+      ['H', 'Afficher / masquer les mesures'], ['B', 'Panneau latéral'], ['C / S', 'Couleurs / paramètres'], ['F', 'Plein écran'],
+    ],
+  });
 
   /* ------------------------- Identification des sons ------------------------- */
 

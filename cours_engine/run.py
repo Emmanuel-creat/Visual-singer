@@ -19,5 +19,18 @@ if __name__ == "__main__":
     print(f"Visual Singer — Cours  ->  {url}")
     print(f"Données               ->  {DATA_DIR}")
     if "--no-browser" not in sys.argv:
-        webbrowser.open(url)
+        # start-cours.bat lance aussi le serveur des pages (port 8080, sauvegardes Bureau) :
+        # on ouvre la page servie par lui s'il répond, sinon celle du moteur.
+        import threading
+        import urllib.request
+
+        def _open():
+            target = url
+            try:
+                urllib.request.urlopen("http://127.0.0.1:8080/api/info", timeout=2)
+                target = "http://localhost:8080/cours.html"
+            except Exception:
+                pass
+            webbrowser.open(target)
+        threading.Timer(1.5, _open).start()
     uvicorn.run("coursia.api:app", host=HOST, port=PORT, log_level="warning", workers=1)

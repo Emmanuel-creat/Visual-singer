@@ -8,5 +8,7 @@ if not exist "cours_engine\.venv\Scripts\python.exe" (
 )
 rem Demarre Ollama s'il ne tourne pas deja (sans effet sinon)
 if exist "%LOCALAPPDATA%\Programs\Ollama\ollama.exe" start "" /min "%LOCALAPPDATA%\Programs\Ollama\ollama.exe" serve
+rem Serveur des pages (accueil, Detecteur, Sommeil, sauvegardes Bureau) ; sans effet s'il tourne deja
+start "Visual Singer - pages" /min python server.py --no-browser
 "cours_engine\.venv\Scripts\python.exe" "cours_engine\run.py"
 if errorlevel 1 pause

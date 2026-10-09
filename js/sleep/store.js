@@ -31,7 +31,18 @@ export class SleepStore extends DesktopStore {
 
   async deleteNight(id) {
     if (!this.available) return false;
-    try { return (await fetch(`api/sleep/night?id=${encodeURIComponent(id)}`, { method: 'DELETE' })).ok; } catch { return false; }
+    try {
+      const res = await fetch(`api/sleep/night?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      return res.ok ? (await res.json()).trash || true : false;
+    } catch { return false; }
+  }
+
+  /** Annule une mise à la corbeille (nom renvoyé par deleteNight). */
+  async restoreNight(trash) {
+    try {
+      const res = await fetch('api/sleep/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trash }) });
+      return res.ok;
+    } catch { return false; }
   }
 
   /** Extrait WAV d'un événement. Renvoie le chemin relatif (servi sous /data/…) ou ''. */

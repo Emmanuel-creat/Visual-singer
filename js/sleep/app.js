@@ -17,6 +17,7 @@ import { TimeChart, BarChart, LaneChart, ringGauge, hbarList, calendarHeat, qual
 import { qColor, qLabel, lin, METRIC_Q, SERIES_Q } from './quality.js';
 import { demoNight } from './demo.js';
 import { icon, hydrateIcons } from '../icons.js';
+import { initShell, bindTabs as shellTabs, hashParams, setHashParam, toast, confirmDialog } from '../shell.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -30,6 +31,8 @@ const LANE_LABEL = {
   vocal: 'Vocalisation', brux: 'Mâchoire', move: 'Mouvement', env: 'Environnement',
 };
 const SLEEP_CFG_KEY = 'visual-singer.sleep';
+const TAB_LABEL = { live: 'Nuit en cours', summary: 'Résumé', timeline: 'Chronologie', breath: 'Ronflements et respiration', events: 'Événements', env: 'Environnement', history: 'Historique' };
+let tabs = null;
 const playIco = icon('play', '#3987e5', { tile: false });
 /** Couleur de l'icône d'une interprétation (catégorie correspondante). */
 const interpColor = (name) => ({ sleep: '#3987e5', compare: '#9085e9' }[name] || Object.values(CATS).find((c) => c.icon === name)?.color || '#3987e5');
@@ -63,6 +66,12 @@ async function boot() {
   $('#clipBudget').value = String(cfg.clipsPerCategory);
   $('#clipBudget').addEventListener('change', (e) => { cfg.clipsPerCategory = Number(e.target.value); storage.set(SLEEP_CFG_KEY, cfg); });
 
+  initShell({
+    beforeQuit: async () => {
+      if (monitor.state === 'recording') { await monitor.stop(); }
+    },
+    shortcuts: [['← / → (onglets)', 'Section précédente / suivante'], ['Retour du navigateur', 'Section ou nuit précédente']],
+  });
   bindTabs();
   bindLive();
   bindPlayer();
@@ -75,14 +84,21 @@ async function boot() {
     for (const x of $$('#hourMetric button')) x.classList.toggle('on', x === b);
     renderSummary();
   });
-  $('#nightSelect').addEventListener('change', (e) => selectNight(e.target.value));
+  $('#nightSelect').addEventListener('change', (e) => { selectNight(e.target.value); setHashParam('nuit', e.target.value); });
+  window.addEventListener('hashchange', () => {
+    const id = hashParams().get('nuit');
+    if (id && id !== currentId && [...$('#nightSelect').options].some((o) => o.value === id)) selectNight(id);
+  });
   $('#tlReset').addEventListener('click', () => charts.tl?.resetZoom());
   for (const s of ['#cmpA', '#cmpB']) $(s).addEventListener('change', renderCompare);
   $('#trendMetric').innerHTML = METRICS.map((m) => `<option value="${m.key}">${esc(m.label)}</option>`).join('');
   $('#trendMetric').addEventListener('change', renderTrend);
 
   await refreshNights();
-  if (summaries.length) await selectNight(summaries[summaries.length - 1].id);
+  const want = hashParams().get('nuit');
+  if (want && summaries.some((x) => x.id === want)) await selectNight(want);
+  else if (summaries.length) await selectNight(summaries[summaries.length - 1].id);
+  tabs.select(hashParams().get('onglet') || 'live', { push: false });
   renderAll();
   setInterval(tickClock, 1000);
   setInterval(() => { if (monitor.state === 'recording') refreshLive(); }, 10000);
@@ -91,20 +107,33 @@ async function boot() {
 /* ---------------------------------------------------------------- Onglets --- */
 
 function bindTabs() {
-  for (const b of $$('.s-tabs button')) b.addEventListener('click', () => showTab(b.dataset.tab));
+  tabs = shellTabs($('.s-tabs'), (name) => {
+    tab = name;
+    for (const p of $$('.pane')) p.classList.toggle('on', p.dataset.pane === name);
+    renderTab();
+  }, { param: 'onglet' });
 }
 
-function showTab(name) {
-  tab = name;
-  for (const b of $$('.s-tabs button')) b.classList.toggle('on', b.dataset.tab === name);
-  for (const p of $$('.pane')) p.classList.toggle('on', p.dataset.pane === name);
-  renderTab();
+/** Change d'onglet (entrée dans l'historique du navigateur : le bouton Retour revient en arrière). */
+function showTab(name) { tabs.select(name); }
+
+/** Fil d'Ariane : Sommeil › Nuit › Onglet. */
+function renderCrumbs() {
+  const night = shownNight();
+  const analysis = tab !== 'live' && tab !== 'history';
+  const items = ['<li><a href="index.html">Accueil</a></li>', '<li><button type="button" data-crumb="live">Sommeil</button></li>'];
+  if (analysis && night) items.push(`<li><button type="button" data-crumb="history">${esc(night === monitor.night ? 'Nuit en cours' : `Nuit du ${dateLabel(night.start)}`)}</button></li>`);
+  items.push(`<li><span aria-current="page">${esc(TAB_LABEL[tab] || '')}</span></li>`);
+  const ol = $('#crumbs');
+  ol.innerHTML = items.join('');
+  ol.onclick = (e) => { const b = e.target.closest('[data-crumb]'); if (b) showTab(b.dataset.crumb); };
 }
 
 function renderAll() { renderTab(); renderHistory(); }
 
 function renderTab() {
   const night = shownNight();
+  renderCrumbs();
   for (const p of $$('.pane')) if (p.dataset.pane !== 'live' && p.dataset.pane !== 'history') p.classList.toggle('empty', !night);
   if (tab === 'live') renderLive();
   else if (tab === 'history') renderHistory();
@@ -167,7 +196,8 @@ function loadDemo() {
 function bindLive() {
   $('#btnRec').addEventListener('click', async () => {
     if (monitor.state === 'recording') {
-      if (!confirm('Terminer l’enregistrement de la nuit ?')) return;
+      const ok = await confirmDialog({ title: 'Terminer l’enregistrement de la nuit ?', message: `Durée enregistrée : ${$('#liveElapsed').textContent}. La nuit sera analysée puis enregistrée sur le Bureau ; l’enregistrement ne peut pas être prolongé ensuite.`, confirmLabel: 'Terminer et analyser' });
+      if (!ok.ok) return;
       setRecUi('saving');
       const night = await monitor.stop();
       liveSummary = null;
@@ -191,7 +221,7 @@ function bindLive() {
   monitor.on('status', ({ message }) => { $('#btnRecLabel').textContent = message.replace(/…$/, '…'); });
   monitor.on('error', (err) => {
     const e = audio.error;
-    alert(e ? `${e.title}\n\n${e.message}\n\n${e.hint}` : `Impossible de démarrer : ${err.message || err}`);
+    confirmDialog({ title: e ? e.title : 'Impossible de démarrer l’enregistrement', message: e ? `${e.message} ${e.hint || ''}` : String(err.message || err), confirmLabel: 'Compris', cancelLabel: 'Fermer' });
   });
   monitor.on('second', onSecond);
   monitor.on('event', (ev) => onLiveEvent(ev));
@@ -485,8 +515,8 @@ function renderEvents() {
   const n = shownNight();
   const all = [...n.events, ...n.pauses.map((p) => ({ ...p, cat: 'pause', n: 1 }))].sort((a, b) => a.t0 - b.t0);
   const counts = Object.fromEntries(EVENT_CATS.map((c) => [c, all.filter((e) => e.cat === c).length]));
-  $('#evFilters').innerHTML = `<button data-f="all" class="${evFilter === 'all' ? 'on' : ''}">Tous <small>${all.length}</small></button>`
-    + EVENT_CATS.filter((c) => counts[c]).map((c) => `<button data-f="${c}" class="${evFilter === c ? 'on' : ''}" style="--cat:${CATS[c].color}"><i></i>${esc(LANE_LABEL[c])} <small>${counts[c]}</small></button>`).join('');
+  $('#evFilters').innerHTML = `<button data-f="all" aria-pressed="${evFilter === 'all'}" class="${evFilter === 'all' ? 'on' : ''}">Tous <small>${all.length}</small></button>`
+    + EVENT_CATS.filter((c) => counts[c]).map((c) => `<button data-f="${c}" aria-pressed="${evFilter === c}" class="${evFilter === c ? 'on' : ''}" style="--cat:${CATS[c].color}"><i></i>${esc(LANE_LABEL[c])} <small>${counts[c]}</small></button>`).join('');
   $('#evFilters').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) { evFilter = b.dataset.f; renderEvents(); } };
   const rows = all.filter((e) => evFilter === 'all' || e.cat === evFilter);
   const t = $('#evTable');
@@ -498,12 +528,27 @@ function renderEvents() {
       <td class="num">${e.db != null ? `${e.db} dB` : '—'}</td><td class="num">${e.peak ? pct(e.peak) : '—'}</td>
       <td>${e.clip ? `<button class="play" data-i="${i}">${playIco} Écouter</button>` : '<span class="muted">—</span>'}</td></tr>`).join('')
     || '<tr><td colspan="8" class="muted">Aucun événement.</td></tr>'}</tbody>`;
+  $('#btnEvCsv').onclick = () => downloadCsv(`sommeil_evenements_${new Date(n.start).toISOString().slice(0, 10)}${evFilter === 'all' ? '' : `_${evFilter}`}.csv`,
+    ['heure', 'type', 'detail', 'duree_s', 'occurrences', 'niveau_max_db', 'confiance'],
+    rows.map((e) => [clockAt(n.start, e.t0), LANE_LABEL[e.cat], e.label || e.resume || '', Math.max(1, Math.round(e.t1 - e.t0)), e.n ?? 1, e.db ?? '', e.peak != null ? e.peak.toFixed(2) : '']));
   t.onclick = (ev) => {
     const b = ev.target.closest('[data-i]');
     if (!b) return;
     const e = rows[Number(b.dataset.i)];
     playClip(e.clip, `${LANE_LABEL[e.cat]}${e.label ? ` · ${e.label}` : ''}`, clockAt(n.start, e.t0), CATS[e.cat].color);
   };
+}
+
+/** Téléchargement CSV (séparateur « ; », BOM UTF-8 pour Excel). */
+function downloadCsv(name, head, rows) {
+  const cell = (v) => { const x = String(v ?? ''); return /[;"\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+  const text = '\ufeff' + [head, ...rows].map((r) => r.map(cell).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`${rows.length} ligne(s) exportée(s) : ${name}`, { type: 'ok' });
 }
 
 /* ---------------------------------------------------------- Environnement --- */
@@ -567,12 +612,22 @@ function renderHistory() {
     const o = e.target.closest('[data-open]');
     if (o) { await selectNight(o.dataset.open); showTab('summary'); return; }
     const d = e.target.closest('[data-del]');
-    if (d && confirm('Déplacer cette nuit dans la corbeille (Bureau/Visual Singer/sommeil/_corbeille) ?')) {
-      await store.deleteNight(d.dataset.del);
-      if (currentId === d.dataset.del) { current = null; currentId = ''; }
-      await refreshNights();
-      renderHistory();
-    }
+    if (!d) return;
+    const label = dateLabel(summaries.find((x) => x.id === d.dataset.del)?.start || Date.now());
+    const ok = await confirmDialog({ title: `Supprimer la nuit du ${label} ?`, message: 'La nuit est déplacée dans Bureau/Visual Singer/sommeil/_corbeille (récupérable). Vous pourrez annuler juste après.', confirmLabel: 'Mettre à la corbeille', danger: true });
+    if (!ok.ok) return;
+    d.disabled = true;
+    const trashed = await store.deleteNight(d.dataset.del);
+    if (!trashed) { d.disabled = false; toast('Suppression impossible : le serveur local ne répond pas.', { type: 'err' }); return; }
+    if (currentId === d.dataset.del) { current = null; currentId = ''; }
+    await refreshNights();
+    renderHistory();
+    toast(`Nuit du ${label} mise à la corbeille`, {
+      action: typeof trashed === 'string' ? { label: 'Annuler', run: async () => {
+        if (await store.restoreNight(trashed)) { await refreshNights(); renderHistory(); toast('Nuit restaurée', { type: 'ok' }); }
+        else toast('Restauration impossible (voir le dossier _corbeille).', { type: 'err' });
+      } } : null,
+    });
   };
   const opts = [...list].reverse().map((s) => `<option value="${esc(s.id)}">${esc(dateLabel(s.start))}${s.demo ? ' (démo)' : ''}</option>`).join('');
   for (const [sel, idx] of [['#cmpA', 0], ['#cmpB', 1]]) {

@@ -24,7 +24,9 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
+import threading
 import webbrowser
 from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -32,6 +34,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 APP_DIR = Path(__file__).resolve().parent
+APP_ROOT = APP_DIR
 MAX_BODY = 25 * 1024 * 1024
 CSV_FIELDS = ["date", "heure", "categorie", "nom", "nom_scientifique", "nom_anglais",
               "confiance", "duree_s", "detections", "modele", "extrait", "alternatives"]
@@ -64,6 +67,25 @@ def desktop_dir() -> Path:
     return Path.home()
 
 
+def stop_ollama() -> None:
+    """Décharge les modèles d'Ollama puis arrête son serveur (libère RAM et VRAM)."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:11434/api/ps", timeout=3) as r:
+            for m in json.loads(r.read()).get("models", []):
+                req = urllib.request.Request("http://127.0.0.1:11434/api/generate", method="POST",
+                                             data=json.dumps({"model": m["name"], "keep_alive": 0}).encode(),
+                                             headers={"Content-Type": "application/json"})
+                urllib.request.urlopen(req, timeout=10).read()
+    except Exception:
+        pass
+    if sys.platform == "win32":
+        for exe in ("ollama app.exe", "ollama.exe"):
+            subprocess.run(["taskkill", "/IM", exe, "/F"], capture_output=True)
+    else:
+        subprocess.run(["pkill", "-f", "ollama"], capture_output=True)
+
+
 def safe_name(text: str, limit: int = 60) -> str:
     text = re.sub(r"[^\w\- ]+", "", text, flags=re.UNICODE).strip().replace(" ", "_")
     return text[:limit] or "son"
@@ -81,6 +103,20 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):  # journal console plus discret
         if "/api/" in (self.path or ""):
             sys.stderr.write("[api] " + (fmt % args) + "\n")
+
+    def send_error(self, code, message=None, explain=None):
+        """Page 404 compréhensible (avec liens vers les applications) au lieu de la page brute."""
+        page = APP_ROOT / "404.html"
+        if code == 404 and page.exists() and not (self.path or "").startswith("/api/"):
+            data = page.read_bytes()
+            self.send_response(404)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(data)
+            return
+        super().send_error(code, message, explain)
 
     def log_error(self, fmt, *args):
         sys.stderr.write("[erreur] " + (fmt % args) + "\n")
@@ -205,9 +241,10 @@ class Handler(SimpleHTTPRequestHandler):
         # Pas de suppression définitive : la nuit part dans sommeil/_corbeille.
         trash = self.data_dir / "sommeil" / "_corbeille"
         trash.mkdir(parents=True, exist_ok=True)
-        os.replace(night_dir, trash / f"{night_dir.name}_{datetime.now():%H%M%S}")
+        trashed = f"{night_dir.name}__{datetime.now():%H%M%S}"
+        os.replace(night_dir, trash / trashed)
         self._write_history_csv()
-        return self._json({"ok": True})
+        return self._json({"ok": True, "trash": trashed})
 
     def do_PUT(self):
         if not self._same_origin():
@@ -244,6 +281,28 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json({"error": "origine refusée"}, 403)
         url = urlparse(self.path)
         try:
+            if url.path == "/api/shutdown":
+                # Bouton « Quitter le logiciel » : réponse immédiate puis arrêt du serveur.
+                body = json.loads(self._body() or b"{}")
+                if body.get("ollama"):
+                    stop_ollama()
+                self._json({"ok": True})
+                threading.Timer(0.3, lambda: os._exit(0)).start()
+                return None
+            if url.path == "/api/sleep/restore":
+                # Action « Annuler » après une mise à la corbeille.
+                name = str(json.loads(self._body() or b"{}").get("trash", ""))
+                if not re.fullmatch(r"[\w\-]+__\d{6}", name):
+                    return self._json({"error": "nom invalide"}, 400)
+                src = self.data_dir / "sommeil" / "_corbeille" / name
+                dst = self.data_dir / "sommeil" / name.rsplit("__", 1)[0]
+                if not src.exists():
+                    return self._json({"error": "introuvable dans la corbeille"}, 404)
+                if dst.exists():
+                    return self._json({"error": "une nuit porte déjà ce nom"}, 409)
+                os.replace(src, dst)
+                self._write_history_csv()
+                return self._json({"ok": True})
             if url.path == "/api/detection":
                 return self._json(self._save_detection(json.loads(self._body())))
             if url.path == "/api/sleep/clip":

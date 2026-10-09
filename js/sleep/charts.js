@@ -27,9 +27,9 @@ function theme() {
     grid: 'rgba(228,228,231,0.08)',
     surface: css('--raised', '#2e2f34'),
     plot: '#17181b',
-    fontTag: '600 11px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif',
-    font: '500 11px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif',
-    fontSm: '500 10px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif',
+    fontTag: '600 12px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif',
+    font: '500 13px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif',
+    fontSm: '500 12px "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif',
   };
 }
 

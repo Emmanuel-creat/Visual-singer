@@ -3,49 +3,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Visual Singer · Sommeil</title>
+  <title>Sommeil — Visual Singer</title>
   <meta name="description" content="Surveillance acoustique du sommeil, 100 % locale.">
   <meta name="theme-color" content="#2a2b2f">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a2b2f'/%3E%3Cpath d='M20 7a9.5 9.5 0 1 0 6 15A8 8 0 0 1 20 7Z' fill='%233987e5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/sommeil.css">
+  <link rel="stylesheet" href="css/ux.css">
   <script type="module" src="js/sleep/app.js"></script>
 </head>
 <body class="sleep-app">
+<a class="skip-link" href="#main">Aller au contenu principal</a>
 <div class="s-app" id="app">
 
   <!-- ============================ BARRE SUPÉRIEURE ============================ -->
   <header class="s-top">
-    <div class="brand">
-      <div class="brand-mark moon" aria-hidden="true" data-icon="sleep" data-icon-color="#3987e5"></div>
-      <div class="brand-text"><b>VISUAL SINGER</b><span>Surveillance du sommeil</span></div>
+    <a class="shell-brand brand" href="index.html" aria-label="Visual Singer — accueil">
+      <span class="brand-mark moon" aria-hidden="true" data-icon="sleep" data-icon-color="#3987e5"></span>
+      <span class="brand-text"><b>Visual Singer</b><span>Surveillance du sommeil</span></span>
+    </a>
+    <nav class="app-switch" aria-label="Applications">
+      <a href="detecteur.html"><i data-icon="wave" data-tile="0" data-icon-color="#ff4d3d"></i><span class="nav-lbl">Détecteur</span></a>
+      <a href="sommeil.html" aria-current="page"><i data-icon="sleep" data-tile="0" data-icon-color="#3987e5"></i><span class="nav-lbl">Sommeil</span></a>
+      <a href="cours.html" data-cours-link><i data-icon="book" data-tile="0" data-icon-color="#c4851a"></i><span class="nav-lbl">Cours</span></a>
+    </nav>
+    <div class="shell-actions">
+      <span class="rec-pill" id="recPill" hidden role="status"><i aria-hidden="true"></i><span class="sr-only">Enregistrement en cours, durée </span><b id="recPillTime">00:00:00</b></span>
+      <span class="local-badge" title="L'audio est analysé sur cet ordinateur ; rien n'est envoyé sur Internet">Traitement 100 % local</span>
+      <button class="btn btn-ghost" type="button" data-shortcuts aria-label="Raccourcis clavier"><kbd>?</kbd><span class="nav-lbl">Raccourcis</span></button>
+      <button class="btn btn-ghost btn-quit" type="button" data-quit><span class="q-ico" aria-hidden="true">⏻</span><span class="nav-lbl">Quitter</span></button>
     </div>
 
-    <nav class="s-tabs" role="tablist" aria-label="Sections">
-      <button role="tab" data-tab="live" class="on">Nuit en cours</button>
-      <button role="tab" data-tab="summary">Résumé</button>
-      <button role="tab" data-tab="timeline">Chronologie</button>
-      <button role="tab" data-tab="breath">Ronflements &amp; respiration</button>
-      <button role="tab" data-tab="events">Événements</button>
-      <button role="tab" data-tab="env">Environnement</button>
-      <button role="tab" data-tab="history">Historique</button>
-    </nav>
-
-    <div class="s-top-right">
-      <label class="night-pick" title="Nuit affichée dans les onglets d'analyse">
-        <span>Nuit</span>
-        <select id="nightSelect"><option value="">—</option></select>
+    <div class="s-bar">
+      <div class="s-tabs" role="tablist" aria-label="Sections">
+        <button type="button" role="tab" data-tab="live">Nuit en cours</button>
+        <button type="button" role="tab" data-tab="summary">Résumé</button>
+        <button type="button" role="tab" data-tab="timeline">Chronologie</button>
+        <button type="button" role="tab" data-tab="breath">Ronflements et respiration</button>
+        <button type="button" role="tab" data-tab="events">Événements</button>
+        <button type="button" role="tab" data-tab="env">Environnement</button>
+        <button type="button" role="tab" data-tab="history">Historique</button>
+      </div>
+      <label class="night-pick">
+        <span>Nuit analysée</span>
+        <select id="nightSelect" aria-describedby="nightHint"><option value="">—</option></select>
+        <span id="nightHint" class="sr-only">Nuit affichée dans les onglets Résumé, Chronologie, Ronflements, Événements et Environnement</span>
       </label>
-      <span class="rec-pill" id="recPill" hidden><i></i><b id="recPillTime">00:00:00</b></span>
-      <a class="btn ghost" href="cours.html" title="Analyse de cours (nécessite start-cours.bat)">Cours ↗</a>
-      <a class="btn ghost" href="index.html" title="Ouvrir le détecteur de sons">Détecteur ↗</a>
     </div>
   </header>
+  <nav class="breadcrumb" aria-label="Fil d'Ariane"><ol id="crumbs"></ol></nav>
 
-  <main class="s-main">
+  <main class="s-main" id="main">
+    <h1 class="sr-only">Surveillance acoustique du sommeil</h1>
 
     <!-- ============================== NUIT EN COURS ============================== -->
-    <section class="pane on" data-pane="live">
+    <section class="pane" data-pane="live">
       <div class="live-grid">
         <div class="s-card live-control">
           <button class="rec-btn" id="btnRec" aria-label="Démarrer l'enregistrement de la nuit">
@@ -68,27 +80,27 @@
               <select id="clipBudget"><option value="0">aucun</option><option value="10">10</option><option value="25">25</option><option value="60">60</option><option value="200">200</option></select>
             </label>
           </div>
-          <p class="note" id="liveNote">L'écran reste allumé pendant l'enregistrement (si le navigateur l'autorise). Laissez cet onglet ouvert toute la nuit, ordinateur branché.</p>
+          <p class="note" id="liveNote" role="status">L'écran reste allumé pendant l'enregistrement (si le navigateur l'autorise). Laissez cet onglet ouvert toute la nuit, ordinateur branché.</p>
           <p class="note warn" id="storeWarn" hidden>Sauvegarde Bureau indisponible : lancez l'application avec <code>start-sommeil.bat</code> (ou <code>python server.py --sommeil</code>) pour enregistrer vos nuits.</p>
         </div>
 
         <div class="s-card live-counters">
-          <h3>Événements de la nuit</h3>
+          <h2>Événements de la nuit</h2>
           <div class="counter-grid" id="liveCounters"></div>
         </div>
 
         <div class="s-card live-chart">
-          <h3>Niveau sonore — 30 dernières minutes</h3>
+          <h2>Niveau sonore — 30 dernières minutes</h2>
           <div class="chart-box" id="liveLevelChart"></div>
         </div>
 
         <div class="s-card live-feed">
-          <h3>Derniers événements</h3>
+          <h2>Derniers événements</h2>
           <ul class="feed" id="liveFeed"><li class="empty">Rien pour l'instant.</li></ul>
         </div>
 
         <div class="s-card live-lanes">
-          <h3>Chronologie en direct</h3>
+          <h2>Chronologie en direct</h2>
           <div class="chart-box tall" id="liveLanes"><p class="muted lanes-empty">La chronologie se construit pendant l'enregistrement.</p></div>
         </div>
       </div>
@@ -108,19 +120,19 @@
         </div>
         <div class="s-card">
           <div class="card-head">
-            <h3>Indicateurs clés</h3>
+            <h2>Indicateurs clés</h2>
             <div class="q-legend" data-qlegend></div>
           </div>
           <div class="rings" id="sumRings"></div>
         </div>
         <div class="sum-grid">
           <div class="s-card">
-            <h3>Hypnogramme estimé</h3>
+            <h2>Hypnogramme estimé</h2>
             <div class="chart-box" id="sumHypno"></div>
           </div>
           <div class="s-card">
             <div class="card-head">
-              <h3>Heure par heure</h3>
+              <h2>Heure par heure</h2>
               <div class="seg" id="hourMetric">
                 <button data-m="snoreMin" class="on">Ronflement</button>
                 <button data-m="move">Mouvements</button>
@@ -133,9 +145,21 @@
           </div>
         </div>
         <div class="s-card">
-          <h3>Interprétation</h3>
+          <h2>Interprétation</h2>
           <div class="interp" id="sumInterp"></div>
         </div>
+        <details class="s-card method">
+          <summary><h2 style="display:inline">Méthode et limites</h2></summary>
+          <div class="md">
+            <p><strong>Acquisition.</strong> Microphone de l'ordinateur, analyse par trames de 1 s ; niveaux exprimés en dB relatifs (non calibrés, sans pondération A) : comparables d'une nuit à l'autre avec le même micro et la même position, pas en dB SPL absolus.</p>
+            <p><strong>Classification des sons.</strong> YAMNet (AudioSet, 521 classes) regroupé en catégories : ronflement, respiration, toux, éternuement, paroles, vocalisations, mâchoire (bruxisme audible), mouvement, environnement. Un événement correspond à des trames consécutives au-dessus du seuil de la catégorie.</p>
+            <p><strong>Veille / sommeil.</strong> Actigraphie acoustique par minute : score d'activité pondéré sur les minutes m−4 … m+2 (pondération inspirée de Cole-Kripke), seuil d'éveil 0,55. Endormissement = premier bloc ≥ 10 min de sommeil continu ; réveil compté au-delà de 3 min d'éveil. Les « stades » de l'hypnogramme sont une estimation, non une polysomnographie.</p>
+            <p><strong>Pauses respiratoires suspectes.</strong> Silence respiratoire de 10 à 90 s survenant dans un contexte respiratoire établi (≥ 8 s de ronflement ou ≥ 25 s de respiration audible sur les 90 s précédentes) ; au-delà de 90 s l'épisode est attribué à un réveil ou un changement de position. Indicateur de dépistage acoustique, sans mesure de SpO₂ ni d'effort respiratoire : il ne correspond pas à un IAH.</p>
+            <p><strong>Rythme respiratoire.</strong> Autocorrélation de l'enveloppe sonore par minute (décalages de 1,5 à 10 s, soit 6 à 40 respirations/min), moyenne glissante sur 7 min ; régularité = hauteur du pic d'autocorrélation (0 → 1).</p>
+            <p><strong>Environnement.</strong> L90 / L50 / L10 = niveaux dépassés 90 / 50 / 10 % du temps (fond, médian, pics fréquents).</p>
+            <p><strong>Code couleur.</strong> Vert = valeur favorable, rouge = défavorable (ex. efficacité 70 % → 90 %, latence 45 → 15 min, WASO 60 → 15 min, pauses 10 → 1 /h, ronflement 30 % → 5 % du sommeil) ; la teinte est toujours accompagnée de la valeur chiffrée.</p>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -145,7 +169,7 @@
       <div data-content>
         <div class="s-card">
           <div class="card-head">
-            <h3>Carte chronologique de la nuit</h3>
+            <h2>Carte chronologique de la nuit</h2>
             <div class="row-btns">
               <span class="hint">molette : zoom · glisser : déplacer · clic : écouter</span>
               <button class="btn" id="tlReset">Toute la nuit</button>
@@ -164,24 +188,24 @@
         <div class="tiles row" id="brTiles"></div>
         <div class="sum-grid">
           <div class="s-card">
-            <h3>Ronflement (secondes par minute)</h3>
+            <h2>Ronflement (secondes par minute)</h2>
             <div class="chart-box" id="brSnore"></div>
           </div>
           <div class="s-card">
-            <h3>Intensité des ronflements (dB)</h3>
+            <h2>Intensité des ronflements (dB)</h2>
             <div class="chart-box" id="brSnoreDb"></div>
           </div>
           <div class="s-card">
-            <h3>Rythme respiratoire estimé <small class="muted">respirations / min · moyenne glissante 7 min</small></h3>
+            <h2>Rythme respiratoire estimé <small class="muted">respirations / min · moyenne glissante 7 min</small></h2>
             <div class="chart-box" id="brRate"></div>
           </div>
           <div class="s-card">
-            <h3>Régularité de la respiration <small class="muted">0 → 1 · moyenne glissante 7 min</small></h3>
+            <h2>Régularité de la respiration <small class="muted">0 → 1 · moyenne glissante 7 min</small></h2>
             <div class="chart-box" id="brReg"></div>
           </div>
         </div>
         <div class="s-card">
-          <h3>Pauses respiratoires suspectes</h3>
+          <h2>Pauses respiratoires suspectes</h2>
           <div class="table-wrap"><table class="tbl" id="brPauses"></table></div>
         </div>
       </div>
@@ -193,8 +217,9 @@
       <div data-content>
         <div class="s-card">
           <div class="card-head">
-            <h3>Tous les événements</h3>
-            <div class="chips" id="evFilters"></div>
+            <h2>Tous les événements</h2>
+            <div class="chips" id="evFilters" role="group" aria-label="Filtrer par type"></div>
+            <button class="btn ghost" type="button" id="btnEvCsv" title="Tableau filtré, séparateur point-virgule (Excel)">Exporter en CSV</button>
           </div>
           <div class="table-wrap tall"><table class="tbl" id="evTable"></table></div>
         </div>
@@ -207,16 +232,16 @@
       <div data-content>
         <div class="tiles row" id="envTiles"></div>
         <div class="s-card">
-          <h3>Niveau sonore ambiant par minute</h3>
+          <h2>Niveau sonore ambiant par minute</h2>
           <div class="chart-box" id="envLevel"></div>
         </div>
         <div class="sum-grid">
           <div class="s-card">
-            <h3>Bruits environnants par type</h3>
+            <h2>Bruits environnants par type</h2>
             <div class="hbars" id="envTypes"></div>
           </div>
           <div class="s-card">
-            <h3>Bruits les plus forts</h3>
+            <h2>Bruits les plus forts</h2>
             <div class="table-wrap"><table class="tbl" id="envLoud"></table></div>
           </div>
         </div>
@@ -227,7 +252,7 @@
     <section class="pane" data-pane="history">
       <div class="s-card">
         <div class="card-head">
-          <h3>Nuits enregistrées</h3>
+          <h2>Nuits enregistrées</h2>
           <div class="row-btns">
             <button class="btn ghost" id="btnDemo">Charger 7 nuits de démonstration</button>
             <span class="hint" id="dataDir"></span>
@@ -238,14 +263,14 @@
       <div class="hist-grid">
         <div class="s-card">
           <div class="card-head">
-            <h3>Évolution au fil des nuits</h3>
+            <h2>Évolution au fil des nuits</h2>
             <select id="trendMetric"></select>
           </div>
           <div class="chart-box" id="trendChart"></div>
         </div>
         <div class="s-card">
           <div class="card-head">
-            <h3>Calendrier des nuits</h3>
+            <h2>Calendrier des nuits</h2>
             <div class="q-legend" data-qlegend></div>
           </div>
           <div class="calendar" id="calendar"></div>
@@ -254,7 +279,7 @@
       </div>
       <div class="s-card">
         <div class="card-head">
-          <h3>Comparer deux nuits</h3>
+          <h2>Comparer deux nuits</h2>
           <div class="row-btns">
             <select id="cmpA"></select><span class="muted">vs</span><select id="cmpB"></select>
           </div>

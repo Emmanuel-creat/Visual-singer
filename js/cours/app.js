@@ -9,12 +9,16 @@ import { markdown, esc, highlight } from './md.js';
 import { qColor, qLabel, lin } from '../sleep/quality.js';
 import { qualityLegend } from '../sleep/charts.js';
 import { storage } from '../utils.js';
+import { initShell, bindTabs, hashParams, setHashParam, toast as shellToast, confirmDialog, promptDialog } from '../shell.js';
 
 const API = location.port === '8091' ? '' : 'http://127.0.0.1:8091';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const SPK = ['#c4851a', '#3987e5', '#14a88a', '#d55181', '#9085e9', '#e0384a', '#8a8c93'];
 const UNIT_LABEL = { slide: 'Diapositive', page: 'Page', section: 'Section' };
+const TAB_LABEL = { read: 'Lecture', summary: 'Résumé', notions: 'Notions', cross: 'Audio ↔ support', review: 'Révision', search: 'Recherche', chat: 'Questions', export: 'Export' };
+const SEARCH_KEY = 'vs.cours.searchKind';
+let tabs = null;
 
 const S = {
   system: null, projects: [], pid: null, project: null, data: null,
@@ -45,28 +49,35 @@ async function api(path, opts = {}) {
 }
 const jsonOpts = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
-function toast(msg, bad = false) {
-  let el = $('#toast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'toast';
-    Object.assign(el.style, { position: 'fixed', left: '50%', bottom: '1.4rem', translate: '-50% 0', padding: '0.6rem 1rem', borderRadius: '12px',
-      background: 'var(--raised)', boxShadow: '6px 6px 16px var(--sh-dark)', fontSize: '0.78rem', zIndex: 50, transition: 'opacity .3s', maxWidth: '90vw' });
-    document.body.append(el);
-  }
-  el.textContent = msg;
-  el.style.color = bad ? '#ff8a96' : 'var(--text)';
-  el.style.opacity = '1';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.opacity = '0'; }, 3800);
+const toast = (msg, bad = false, action = null) => shellToast(msg, { type: bad ? 'err' : 'info', action });
+
+/** Empêche la double soumission : bouton désactivé + indicateur pendant l'opération. */
+async function busy(btn, fn) {
+  if (!btn || btn.getAttribute('aria-busy') === 'true') return undefined;
+  btn.setAttribute('aria-busy', 'true');
+  btn.disabled = true;
+  try { return await fn(); } finally { btn.removeAttribute('aria-busy'); btn.disabled = false; }
 }
 
 /* ------------------------------------------------------------------ démarrage */
 
 async function boot() {
   hydrateIcons();
+  initShell({
+    shortcuts: [
+      ['Espace', 'Lecture / pause du média'], ['← / →', 'Reculer / avancer de 5 s (Maj : 30 s)'],
+      ['/', 'Aller à la recherche'], ['Entrée (questions)', 'Envoyer ; Maj+Entrée : retour à la ligne'],
+      ['Retour du navigateur', 'Onglet ou cours précédent'],
+    ],
+  });
   for (const el of $$('[data-qlegend]')) qualityLegend(el);
   bindUi();
+  tabs = bindTabs($('.s-tabs'), onTab, { param: 'onglet' });
+  tabs.select(hashParams().get('onglet') || 'read', { push: false });
+  window.addEventListener('hashchange', () => {
+    const want = hashParams().get('cours');
+    if (want && want !== S.pid && S.projects.some((p) => p.id === want)) openProject(want, { push: false });
+  });
   try {
     await loadSystem();
   } catch {
@@ -76,9 +87,11 @@ async function boot() {
     return;
   }
   await loadProjects();
-  const want = location.hash.slice(1) || storage.get('vs.cours.last', null);
-  if (want && S.projects.some((p) => p.id === want)) await openProject(want);
-  else $('#app').classList.add('no-project');
+  const h = hashParams();
+  const legacy = location.hash.length > 1 && !location.hash.includes('=') ? location.hash.slice(1) : null;
+  const want = h.get('cours') || legacy || storage.get('vs.cours.last', null);
+  if (want && S.projects.some((p) => p.id === want)) await openProject(want, { push: false });
+  else { $('#app').classList.add('no-project'); renderCrumbs(); }
   setInterval(loadSystem, 15000);
 }
 
@@ -105,10 +118,10 @@ function jobLabel(st) {
 
 function renderProjects() {
   const ul = $('#projList');
-  if (!S.projects.length) { ul.innerHTML = '<li class="muted">Aucun cours. Cliquez sur « Nouveau ».</li>'; return; }
+  if (!S.projects.length) { ul.innerHTML = '<li class="muted">Aucun cours. Cliquez sur « Nouveau cours ».</li>'; return; }
   ul.innerHTML = S.projects.map((p) => {
     const [lab, cls] = jobLabel(p.state);
-    return `<li data-id="${esc(p.id)}" class="${p.id === S.pid ? 'on' : ''}"><b>${esc(p.title)}</b><span class="st ${cls}">${lab}</span>
+    return `<li data-id="${esc(p.id)}" tabindex="0" role="button" ${p.id === S.pid ? 'aria-current="true"' : ''} class="${p.id === S.pid ? 'on' : ''}"><b>${esc(p.title)}</b><span class="st ${cls}">${lab}</span>
       <small>${new Date(p.created * 1000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}${p.media ? ` · ${esc(p.media.name)}` : ''}</small></li>`;
   }).join('');
 }
@@ -116,17 +129,18 @@ function renderProjects() {
 /* ------------------------------------------------------------------- projet */
 
 async function newProject() {
-  const title = prompt('Titre du cours :', 'Nouveau cours');
+  const title = await promptDialog({ title: 'Nouveau cours', label: 'Titre du cours', value: '', hint: 'Ex. : Pharmacologie — cours 4, anticoagulants. Modifiable ensuite.', confirmLabel: 'Créer le cours' });
   if (title === null) return;
   const p = await api('/api/projects', jsonOpts('POST', { title }));
   await loadProjects();
   await openProject(p.id);
 }
 
-async function openProject(pid) {
+async function openProject(pid, { push = true } = {}) {
   S.pid = pid;
   S.data = null; S.cur = -1; S.words.clear(); S.chat = []; S.pinnedUnit = null; S.shownUnit = null;
-  location.hash = pid;
+  if (push) setHashParam('cours', pid);
+  else if (hashParams().get('cours') !== pid) history.replaceState(null, '', `#${new URLSearchParams({ cours: pid, onglet: S.tab })}`);
   storage.set('vs.cours.last', pid);
   $('#app').classList.remove('no-project');
   renderProjects();
@@ -166,7 +180,9 @@ function renderProjectPanel() {
   }
   const busy = p.running || p.queued;
   $('#btnRun').disabled = busy || !p.media;
-  $('#btnRun span').textContent = busy ? (p.queued ? 'En attente…' : 'Analyse en cours…') : (p.state?._job?.status === 'done' ? 'Relancer (mises à jour)' : "Lancer l'analyse");
+  $('#btnRun span').textContent = busy ? (p.queued ? 'En attente…' : 'Analyse en cours…') : (p.state?._job?.status === 'done' ? 'Relancer (étapes modifiées seulement)' : "Lancer l'analyse");
+  $('#btnRun').title = !p.media ? 'Ajoutez d’abord l’audio ou la vidéo du cours' : '';
+  renderCrumbs();
   $('#btnCancel').hidden = !busy;
   const steps = S.system?.steps || [];
   $('#steps').innerHTML = steps.map(({ id, label }) => {
@@ -234,26 +250,45 @@ async function addDocs(files) {
 
 function bindUi() {
   for (const b of $$('.s-tabs button')) b.addEventListener('click', () => showTab(b.dataset.tab));
-  $('#btnSide').addEventListener('click', () => $('#app').classList.toggle('side-hidden'));
+  $('#btnSide').addEventListener('click', () => {
+    const hidden = $('#app').classList.toggle('side-hidden');
+    $('#btnSide').setAttribute('aria-expanded', String(!hidden));
+  });
   $('#btnNew').addEventListener('click', newProject);
   $('#btnNew2').addEventListener('click', newProject);
   $('#projList').addEventListener('click', (e) => { const li = e.target.closest('li[data-id]'); if (li) openProject(li.dataset.id); });
+  $('#projList').addEventListener('keydown', (e) => { const li = e.target.closest('li[data-id]'); if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openProject(li.dataset.id); } });
   $('#projTitle').addEventListener('change', async (e) => {
     await api(`/api/projects/${encodeURIComponent(S.pid)}`, jsonOpts('PATCH', { title: e.target.value }));
     loadProjects();
   });
   $('#btnDelete').addEventListener('click', async () => {
-    if (!confirm('Mettre ce cours à la corbeille (Bureau/Visual Singer/cours/_corbeille) ?')) return;
-    await api(`/api/projects/${encodeURIComponent(S.pid)}`, { method: 'DELETE' });
-    S.pid = null; location.hash = '';
+    const title = S.project?.title || 'ce cours';
+    const r = await confirmDialog({ title: `Mettre « ${title} » à la corbeille ?`, message: 'Le cours (média, support, transcription, analyses, exports) est déplacé dans Bureau/Visual Singer/cours/_corbeille. Vous pourrez annuler juste après.', confirmLabel: 'Mettre à la corbeille', danger: true });
+    if (!r.ok) return;
+    let res;
+    try { res = await busy($('#btnDelete'), () => api(`/api/projects/${encodeURIComponent(S.pid)}`, { method: 'DELETE' })); } catch (e) { toast(e.message, true); return; }
+    S.pid = null; setHashParam('cours', null);
+    storage.set('vs.cours.last', null);
     $('#projPanel').hidden = true;
     $('#app').classList.add('no-project');
-    loadProjects();
+    renderCrumbs();
+    await loadProjects();
+    if (res?.trash) {
+      toast(`« ${title} » mis à la corbeille`, false, { label: 'Annuler', run: async () => {
+        try {
+          const back = await api(`/api/trash/${encodeURIComponent(res.trash)}/restore`, { method: 'POST' });
+          await loadProjects();
+          if (back?.id) await openProject(back.id);
+          toast('Cours restauré.');
+        } catch (e) { toast(`Restauration impossible : ${e.message}`, true); }
+      } });
+    }
   });
   for (const [drop, input, handler] of [['#dropMedia', '#fileMedia', (f) => addMedia(f[0])], ['#dropDocs', '#fileDocs', (f) => addDocs([...f])]]) {
     const d = $(drop), inp = $(input);
     d.addEventListener('click', () => inp.click());
-    d.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.click(); });
+    d.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } });
     inp.addEventListener('change', () => { handler(inp.files); inp.value = ''; });
     d.addEventListener('dragover', (e) => { e.preventDefault(); d.classList.add('over'); });
     d.addEventListener('dragleave', () => d.classList.remove('over'));
@@ -261,8 +296,11 @@ function bindUi() {
   }
   $('#docList').addEventListener('click', async (e) => {
     const b = e.target.closest('[data-del]');
-    if (!b || !confirm('Retirer ce document du cours ?')) return;
-    await api(`/api/projects/${encodeURIComponent(S.pid)}/docs/${b.dataset.del}`, { method: 'DELETE' });
+    if (!b) return;
+    const name = b.closest('li')?.querySelector('span')?.textContent || 'ce document';
+    const r = await confirmDialog({ title: 'Retirer ce document du cours ?', message: `« ${name} » ne sera plus utilisé pour l’alignement ni le croisement. Relancez l’analyse pour mettre à jour les résultats.`, confirmLabel: 'Retirer le document', danger: true });
+    if (!r.ok) return;
+    await busy(b, () => api(`/api/projects/${encodeURIComponent(S.pid)}/docs/${b.dataset.del}`, { method: 'DELETE' })).catch((err) => toast(err.message, true));
     refreshProject();
   });
   for (const sel of $$('[data-set]')) {
@@ -272,13 +310,18 @@ function bindUi() {
       refreshProject();
     });
   }
-  $('#btnRun').addEventListener('click', async () => {
-    await api(`/api/projects/${encodeURIComponent(S.pid)}/process`, { method: 'POST' });
-    refreshProject(); loadProjects();
-  });
+  $('#btnRun').addEventListener('click', () => busy($('#btnRun'), async () => {
+    try {
+      await api(`/api/projects/${encodeURIComponent(S.pid)}/process`, { method: 'POST' });
+      toast('Analyse lancée. Vous pouvez continuer à consulter les autres cours.');
+    } catch (e) { toast(e.message, true); }
+    await refreshProject(); loadProjects();
+  }));
   $('#btnCancel').addEventListener('click', async () => {
-    await api(`/api/projects/${encodeURIComponent(S.pid)}/cancel`, { method: 'POST' });
-    toast('Annulation demandée : le traitement s’arrête après l’étape en cours de sauvegarde.');
+    const r = await confirmDialog({ title: 'Interrompre l’analyse ?', message: 'Les étapes terminées sont conservées ; un nouveau lancement reprendra à l’étape interrompue.', confirmLabel: 'Interrompre', cancelLabel: 'Continuer l’analyse' });
+    if (!r.ok) return;
+    await busy($('#btnCancel'), () => api(`/api/projects/${encodeURIComponent(S.pid)}/cancel`, { method: 'POST' })).catch((e) => toast(e.message, true));
+    toast('Interruption demandée : le traitement s’arrête à la fin de l’étape en cours.');
   });
 
   // Horodatages cliquables partout.
@@ -302,7 +345,7 @@ function bindUi() {
     const b = e.target.closest('[data-spk]');
     if (!b) return;
     const i = Number(b.dataset.spk);
-    const name = prompt('Nom de cet intervenant :', S.data.speakers[i]);
+    const name = await promptDialog({ title: 'Renommer l’intervenant', label: 'Nom affiché dans la transcription et les exports', value: S.data.speakers[i], confirmLabel: 'Renommer', maxLength: 60 });
     if (!name) return;
     const names = [...S.data.speakers];
     names[i] = name;
@@ -311,6 +354,12 @@ function bindUi() {
   });
   $('#glossFilter').addEventListener('input', debounce(renderNotions, 200));
   $('#searchForm').addEventListener('submit', (e) => { e.preventDefault(); runSearch(); });
+  $('#searchKind').value = storage.get(SEARCH_KEY, 'all') || 'all';
+  $('#searchKind').addEventListener('change', () => { storage.set(SEARCH_KEY, $('#searchKind').value); if ($('#searchInput').value.trim()) runSearch(); });
+  $('#results').addEventListener('click', (e) => {
+    const sug = e.target.closest('[data-suggest]');
+    if (sug) { $('#searchInput').value = sug.dataset.suggest; runSearch(); }
+  });
   $('#results').addEventListener('click', (e) => {
     const r = e.target.closest('.res');
     if (!r || e.target.closest('[data-t]')) return;
@@ -328,9 +377,13 @@ function bindUi() {
   });
   $('#qaReveal').addEventListener('click', () => $$('.card-qa').forEach((c) => c.classList.add('open')));
   $('#qaShuffle').addEventListener('click', () => { const box = $('#qa'); [...box.children].sort(() => Math.random() - 0.5).forEach((c) => box.append(c)); });
-  for (const b of $$('[data-export]')) b.addEventListener('click', () => doExport(b.dataset.export));
+  for (const b of $$('[data-export]')) b.addEventListener('click', () => busy(b, () => doExport(b.dataset.export)));
   document.addEventListener('keydown', (e) => {
-    if (e.target.closest('input, textarea, select') || !S.media) return;
+    if (e.target.closest('input, textarea, select, dialog') || document.querySelector('dialog[open]')) return;
+    if (e.key === '/' && S.pid) { e.preventDefault(); showTab('search'); return; }
+    if (!S.media || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === ' ' && e.target.closest('button, a, [role="button"], [role="tab"], video, audio')) return;
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.target.closest('[role="tab"]')) return;
     if (e.key === ' ') { e.preventDefault(); S.media.paused ? S.media.play() : S.media.pause(); }
     if (e.key === 'ArrowLeft') S.media.currentTime -= e.shiftKey ? 30 : 5;
     if (e.key === 'ArrowRight') S.media.currentTime += e.shiftKey ? 30 : 5;
@@ -339,12 +392,36 @@ function bindUi() {
 
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
+/** Change d'onglet (ajouté à l'historique : le bouton Retour revient à l'onglet précédent). */
 function showTab(name) {
+  if (tabs) tabs.select(name); else onTab(name);
+}
+
+function onTab(name) {
   S.tab = name;
-  for (const b of $$('.s-tabs button')) b.classList.toggle('on', b.dataset.tab === name);
   for (const p of $$('.pane')) p.classList.toggle('on', p.dataset.pane === name);
   if (name === 'chat') $('#chatInput').focus();
   if (name === 'search') $('#searchInput').focus();
+  renderCrumbs();
+}
+
+/** Fil d'Ariane : Accueil › Cours › Titre › Onglet. */
+function renderCrumbs() {
+  const ol = $('#crumbs');
+  if (!ol) return;
+  const items = ['<li><a href="index.html">Accueil</a></li>'];
+  if (S.pid && S.project) {
+    items.push('<li><button type="button" data-crumb="list">Cours</button></li>');
+    items.push(`<li><button type="button" data-crumb="read">${esc(S.project.title)}</button></li>`);
+    items.push(`<li><span aria-current="page">${esc(TAB_LABEL[S.tab] || '')}</span></li>`);
+  } else items.push('<li><span aria-current="page">Cours</span></li>');
+  ol.innerHTML = items.join('');
+  ol.onclick = (e) => {
+    const b = e.target.closest('[data-crumb]');
+    if (!b) return;
+    if (b.dataset.crumb === 'list') { $('#app').classList.remove('side-hidden'); $('#projList li[data-id]')?.focus(); }
+    else showTab('read');
+  };
 }
 
 /* ------------------------------------------------------------------ rendu */
@@ -369,7 +446,10 @@ function renderPlayer() {
   const box = $('#playerBox');
   if (!a) { box.innerHTML = '<p class="muted">Le lecteur apparaîtra après l’extraction audio.</p>'; S.media = null; return; }
   const tag = a.playback_kind === 'video' ? 'video' : 'audio';
-  box.innerHTML = `<${tag} controls preload="metadata" src="${fileUrl(a.playback)}"></${tag}>`;
+  // Vidéo : sous-titres générés depuis la transcription (WebVTT servi par le moteur).
+  const track = tag === 'video' && S.data.paragraphs?.length
+    ? `<track kind="captions" srclang="${esc(S.project?.settings?.language && S.project.settings.language !== 'auto' ? S.project.settings.language : 'fr')}" label="Transcription" src="${API}/api/projects/${encodeURIComponent(S.pid)}/captions.vtt" default>` : '';
+  box.innerHTML = `<${tag} controls preload="metadata" ${tag === 'video' ? 'crossorigin="anonymous" ' : ''}aria-label="Enregistrement du cours" src="${fileUrl(a.playback)}">${track}</${tag}>`;
   S.media = box.firstElementChild;
   let raf = 0;
   const onTime = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; syncToTime(S.media.currentTime); }); };
@@ -626,9 +706,9 @@ function updateScore() {
 
 async function runSearch() {
   const q = $('#searchInput').value.trim();
-  if (!q) return;
   const box = $('#results');
-  box.innerHTML = '<p class="muted">Recherche…</p>';
+  if (!q) { box.innerHTML = searchHelp('Saisissez un terme ou une question.'); return; }
+  box.innerHTML = '<p class="muted" aria-busy="true">Recherche…</p>';
   try {
     const res = await api(`/api/projects/${encodeURIComponent(S.pid)}/search?q=${encodeURIComponent(q)}&kind=${$('#searchKind').value}&k=15`);
     box.innerHTML = res.map((r) => r.kind === 'audio'
@@ -636,8 +716,21 @@ async function runSearch() {
           <div><p>${highlight(r.text, q)}</p></div></div>`
       : `<div class="res" data-u="${esc(r.unit)}"><div class="rk">${r.image ? `<img loading="lazy" src="${fileUrl(r.image)}" alt="">` : ''}<span>${UNIT_LABEL[r.unit_kind] || ''} ${r.n}</span></div>
           <div><h4>${esc(r.title)} <span class="muted">· ${esc(r.doc_name)}</span></h4><p>${highlight(r.text.slice(0, 600), q)}</p>
-          ${(S.data.index?.unit_times?.[r.unit] || []).slice(0, 4).map(([a]) => tBtn(a)).join(' ')}</div></div>`).join('') || '<p class="muted">Aucun résultat.</p>';
+          ${(S.data.index?.unit_times?.[r.unit] || []).slice(0, 4).map(([a]) => tBtn(a)).join(' ')}</div></div>`).join('')
+      || searchHelp(`Aucun passage pour « ${q} »${$('#searchKind').value !== 'all' ? ' dans cette source' : ''}.`);
   } catch (e) { box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
+}
+
+/** État vide utile : pistes de reformulation + notions du cours comme suggestions. */
+function searchHelp(title) {
+  const terms = (S.data?.analysis?.glossary || []).slice(0, 8).map((g) => g.terme);
+  const kind = $('#searchKind').value;
+  return `<div class="empty-help"><p><strong>${esc(title)}</strong></p><ul>
+    ${kind !== 'all' ? '<li>Élargissez la recherche à « Tout » (transcription et support).</li>' : ''}
+    <li>Utilisez un synonyme ou une formulation plus générale ; la recherche est sémantique.</li>
+    <li>Pour une question complète, l’onglet <button type="button" onclick="document.querySelector('[data-tab=chat]').click()">Questions</button> répond avec les sources.</li>
+    ${S.data?.paragraphs?.length ? '' : '<li>Le cours n’est pas encore indexé : lancez l’analyse.</li>'}
+  </ul>${terms.length ? `<p>Notions de ce cours : ${terms.map((t) => `<button type="button" class="chip-t" data-suggest="${esc(t)}">${esc(t)}</button>`).join(' ')}</p>` : ''}</div>`;
 }
 
 /* ------------------------------------------------------------------ chat */
@@ -656,8 +749,11 @@ function renderAnswer(text, sources) {
 async function sendChat() {
   const input = $('#chatInput');
   const question = input.value.trim();
-  if (!question) return;
+  const send = $('#chatSend');
+  if (!question || send.getAttribute('aria-busy') === 'true') { if (!question) input.focus(); return; }
   input.value = '';
+  send.setAttribute('aria-busy', 'true');
+  send.disabled = true;
   const log = $('#chatLog');
   log.insertAdjacentHTML('beforeend', `<div class="msg user"><div class="bubble">${esc(question)}</div></div>`);
   const bot = document.createElement('div');
@@ -699,7 +795,11 @@ async function sendChat() {
     S.chat.push({ role: 'user', content: question }, { role: 'assistant', content: text });
   } catch (e) {
     bubble.classList.remove('typing');
-    bubble.textContent = `Erreur : ${e.message}`;
+    bubble.textContent = `Réponse impossible : ${e.message}. Vérifiez qu’Ollama est lancé (start-cours.bat), puis renvoyez la question.`;
+    input.value ||= question;
+  } finally {
+    send.removeAttribute('aria-busy');
+    send.disabled = false;
   }
 }
 
@@ -707,7 +807,7 @@ async function sendChat() {
 
 async function doExport(format) {
   const note = $('#exportNote');
-  note.textContent = 'Génération…';
+  note.textContent = `Génération du fichier ${format.toUpperCase()}…`;
   try {
     const r = await fetch(`${API}/api/projects/${encodeURIComponent(S.pid)}/export`, jsonOpts('POST', { format, transcript: $('#expTranscript').checked }));
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
@@ -718,8 +818,8 @@ async function doExport(format) {
     a.download = name ? decodeURIComponent(name) : `cours.${format}`;
     a.click();
     URL.revokeObjectURL(a.href);
-    note.textContent = 'Fichier enregistré (une copie est aussi dans le dossier exports du cours).';
-  } catch (e) { note.textContent = `Erreur : ${e.message}`; }
+    note.textContent = `${a.download} enregistré (une copie est aussi dans le dossier exports du cours).`;
+  } catch (e) { note.textContent = `Export impossible : ${e.message}`; toast(`Export ${format.toUpperCase()} impossible : ${e.message}`, true); }
 }
 
 boot();

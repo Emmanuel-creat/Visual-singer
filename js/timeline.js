@@ -57,7 +57,7 @@ export class Timeline extends Emitter {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  get pad() { return { l: 12, r: 52, top: 18, bottom: 6 }; }
+  get pad() { return { l: 12, r: 72, top: 18, bottom: 6 }; }
 
   _xToTime(x) {
     const p = this.pad;
@@ -146,7 +146,7 @@ export class Timeline extends Emitter {
 
     // Repères temporels (relatifs au direct).
     const step = this._tickStep(this.span, gx1 - gx0);
-    ctx.font = '600 10px "JetBrains Mono", "Cascadia Mono", Consolas, monospace';
+    ctx.font = '600 12px "JetBrains Mono", "Cascadia Mono", Consolas, monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     const firstRel = Math.ceil((t0 - latest) / step) * step;
@@ -156,7 +156,7 @@ export class Timeline extends Emitter {
       ctx.fillStyle = css.grid;
       ctx.fillRect(Math.round(x), gy0, 1, gh);
       ctx.fillStyle = Math.abs(rel) < 1e-6 ? css.text : css.textDim;
-      const label = Math.abs(rel) < 1e-6 ? 'NOW' : (step < 60 ? `${Math.round(rel)}s` : formatOffset(rel));
+      const label = Math.abs(rel) < 1e-6 ? '0 s' : (step < 60 ? `${Math.round(rel)}s` : formatOffset(rel));
       ctx.fillText(label, x, 8);
     }
 
@@ -189,7 +189,7 @@ export class Timeline extends Emitter {
     ctx.globalAlpha = 1;
 
     // Sons identifiés : bandes colorées par catégorie en bas du graphe.
-    ctx.font = '600 9px "Segoe UI", system-ui, sans-serif';
+    ctx.font = '600 12px "Segoe UI", system-ui, sans-serif';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     for (const d of this.detections) {
@@ -252,13 +252,13 @@ export class Timeline extends Emitter {
     ctx.beginPath();
     ctx.moveTo(xc - 6, gy0 - 8); ctx.lineTo(xc + 6, gy0 - 8); ctx.lineTo(xc + 6, gy0 - 2); ctx.lineTo(xc, gy0 + 4); ctx.lineTo(xc - 6, gy0 - 2);
     ctx.closePath(); ctx.fill();
-    const label = tr.isLive ? 'LIVE' : formatOffset(cur - latest);
+    const label = tr.isLive ? 'Direct' : formatOffset(cur - latest);
     this._tag(clamp(xc, gx0 + 34, gx1 - 34), gy0 + gh / 2, label, c.cursor, c.bg, true);
 
     // Bord du direct.
     ctx.fillStyle = tr.isLive ? c.accent : css.textDim;
     ctx.textAlign = 'left';
-    ctx.fillText(tr.isLive ? '● LIVE' : '○ LIVE', gx1 + 6, gy0 + gh / 2);
+    ctx.fillText(tr.isLive ? '● Direct' : '○ Direct', gx1 + 6, gy0 + gh / 2);
   }
 
   _drawCurves(t0, t1, gx0, gx1, gy0, gy1) {
@@ -332,7 +332,7 @@ export class Timeline extends Emitter {
 
   _tag(x, y, text, bg, fg, bold = false) {
     const { ctx } = this;
-    ctx.font = `${bold ? 700 : 600} 10px "JetBrains Mono", "Cascadia Mono", Consolas, monospace`;
+    ctx.font = `${bold ? 700 : 600} 12px "JetBrains Mono", "Cascadia Mono", Consolas, monospace`;
     const tw = ctx.measureText(text).width + 10;
     ctx.fillStyle = bg;
     ctx.beginPath();

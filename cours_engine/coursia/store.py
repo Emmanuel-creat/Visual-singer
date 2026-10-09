@@ -150,9 +150,26 @@ def list_projects() -> list[dict]:
     return out
 
 
-def delete_project(pid: str) -> None:
-    """Pas de suppression définitive : déplacement dans cours/_corbeille."""
+def delete_project(pid: str) -> str:
+    """Pas de suppression définitive : déplacement dans cours/_corbeille. Renvoie le nom dans la corbeille."""
     src = DATA_DIR / pid
     trash = DATA_DIR / "_corbeille"
     trash.mkdir(exist_ok=True)
-    shutil.move(str(src), str(trash / f"{pid}-{int(time.time())}"))
+    name = f"{pid}--{int(time.time())}"
+    shutil.move(str(src), str(trash / name))
+    return name
+
+
+def restore_project(name: str) -> str:
+    """Ramène un cours de la corbeille (annulation d'une suppression)."""
+    if not re.fullmatch(r"[\w\-]+", name):
+        raise FileNotFoundError(name)
+    src = DATA_DIR / "_corbeille" / name
+    if not src.is_dir():
+        raise FileNotFoundError(name)
+    pid = name.rsplit("--", 1)[0]
+    dst = DATA_DIR / pid
+    if dst.exists():
+        raise FileExistsError(pid)
+    shutil.move(str(src), str(dst))
+    return pid

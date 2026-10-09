@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Détecteur — Visual Singer</title>
+  <meta name="description" content="Spectre audio 3D temps réel et identification des sources sonores — 100 % local.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a2b2f'/%3E%3Cpath d='M7 16h2M11 11v10M15 7v18M19 12v8M23 14v4' stroke='%23ff4d3d' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ux.css">
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#viewport">Aller à la visualisation</a>
+<div class="app" id="app">
+
+  <!-- ============================ BARRE SUPÉRIEURE ============================ -->
+  <header class="topbar">
+    <button class="icon-btn" id="btnSidebar" title="Afficher / masquer le panneau latéral (B)" aria-label="Afficher ou masquer le panneau latéral" aria-controls="sidebar">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12M2 8h12M2 13h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+    </button>
+    <a class="shell-brand brand" href="index.html" aria-label="Visual Singer — accueil">
+      <span class="brand-mark" aria-hidden="true" data-icon="wave"></span>
+      <span class="brand-text"><b>Visual Singer</b><span>Détecteur</span></span>
+    </a>
+    <h1 class="sr-only">Détecteur acoustique — spectre 3D et identification des sons</h1>
+    <nav class="app-switch" aria-label="Applications">
+      <a href="detecteur.html" aria-current="page"><i data-icon="wave" data-tile="0" data-icon-color="#ff4d3d"></i><span class="nav-lbl">Détecteur</span></a>
+      <a href="sommeil.html"><i data-icon="sleep" data-tile="0" data-icon-color="#3987e5"></i><span class="nav-lbl">Sommeil</span></a>
+      <a href="cours.html" data-cours-link><i data-icon="book" data-tile="0" data-icon-color="#c4851a"></i><span class="nav-lbl">Cours</span></a>
+    </nav>
+
+    <div class="stat-strip hide-xl" id="serverStrip" aria-label="Supervision serveur">
+      <div class="stat"><label>Serveur</label><b id="tbStatus" data-state="offline">—</b></div>
+      <div class="stat"><label>Clients</label><b id="tbPlayers">— / —</b></div>
+      <div class="stat"><label>Cadence</label><b id="tbTps">— TPS</b></div>
+      <div class="stat hide-sm"><label>CPU</label><b id="tbCpu">—</b></div>
+      <div class="stat hide-sm"><label>RAM</label><b id="tbRam">—</b></div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="stat-group">
+        <div class="stat"><label>Entrée</label><b id="tbAudio" data-state="off">Arrêtée</b></div>
+        <div class="stat hide-sm"><label>Images/s</label><b id="tbFps">—</b></div>
+        <div class="stat hide-md"><label>Session</label><b id="tbClock">00:00</b></div>
+      </div>
+      <button class="btn" data-drawer="settings" title="Paramètres (S)" aria-label="Paramètres">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="hide-md">Paramètres</span>
+      </button>
+      <div class="shell-actions">
+        <button class="btn btn-ghost" type="button" data-shortcuts aria-label="Raccourcis clavier"><kbd>?</kbd></button>
+        <button class="btn btn-ghost btn-quit" type="button" data-quit><span class="q-ico" aria-hidden="true">⏻</span><span class="nav-lbl">Quitter</span></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================================ CENTRE ================================= -->
+  <main class="main" id="main">
+
+    <!-- ---------- Panneau latéral ---------- -->
+    <aside class="sidebar" id="sidebar">
+      <section class="panel id-panel">
+        <h3><span class="dot" id="idDot"></span>Identification<small id="idState">Inactive</small></h3>
+        <div class="id-main" id="idMain" aria-live="polite">
+          <div class="id-icon" id="idIcon" aria-hidden="true">◌</div>
+          <div class="id-text"><b id="idName">Identification inactive</b><span id="idSci">Connectez le micro puis activez-la</span></div>
+          <div class="id-conf" id="idConf"></div>
+        </div>
+        <div class="id-progress" id="idProgress" hidden><div class="bar"><i></i></div><span></span></div>
+        <div class="cat-rows" id="catRows"></div>
+        <div class="id-alt" id="idAlt"></div>
+        <button class="btn" id="btnRecog">Activer l'identification</button>
+      </section>
+
+
+      <section class="panel">
+        <h3><span class="dot" id="micDot"></span>Microphone</h3>
+        <button class="btn-mic" id="btnMic"><span class="ico" data-icon="mic"></span><span id="btnMicLabel">Connecter le microphone</span></button>
+        <button class="btn ghost file-btn" id="btnFile" title="Analyser un enregistrement (ou glisser-déposer un fichier sur la vue 3D)"><i data-icon="folder" data-icon-color="#3987e5"></i> Analyser un fichier audio</button>
+        <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a" hidden>
+        <div class="mic-status" id="micStatus" role="status">○ Microphone coupé</div>
+        <div class="meter" title="Niveau du signal d'entrée (RMS / crête)" role="img" aria-label="Niveau du signal d'entrée">
+          <div class="meter-scale"></div>
+          <div class="meter-fill" id="micMeter"></div>
+          <div class="meter-peak" id="micPeak"></div>
+        </div>
+        <div class="kv"><span>Périphérique</span><b id="micDevice" class="ellipsis">—</b></div>
+        <div class="kv"><span>Échantillonnage</span><b id="micRate">—</b></div>
+        <div class="kv"><span>Taille FFT</span><b id="micFft">—</b></div>
+        <div class="kv"><span>Fréquence dominante</span><b id="micDom">—</b></div>
+        <div class="kv"><span>Niveau RMS</span><b id="micVol">—</b></div>
+        <div class="kv"><span>Saturation</span><b id="micClip" class="ok">Aucune</b></div>
+      </section>
+
+      <section class="panel">
+        <h3>Bandes de fréquences<small id="audioAt">Direct</small></h3>
+        <div class="band-row" data-zone="bass"><span>Graves</span><div class="bar"><i id="barBass"></i></div><b id="valBass">0%</b></div>
+        <div class="band-row" data-zone="mid"><span>Médiums</span><div class="bar"><i id="barMid"></i></div><b id="valMid">0%</b></div>
+        <div class="band-row" data-zone="treble"><span>Aigus</span><div class="bar"><i id="barTreble"></i></div><b id="valTreble">0%</b></div>
+        <div class="band-row" data-zone="intensity"><span>Intensité</span><div class="bar"><i id="barInt"></i></div><b id="valInt">0%</b></div>
+        <div class="kv dominant"><span>Zone dominante</span><b id="domZone">—</b></div>
+        <div class="kv"><span>Plages (Hz)</span><b id="zoneRanges">—</b></div>
+      </section>
+
+      <section class="panel grow">
+        <h3 class="tabs" role="tablist" aria-label="Journal">
+          <button data-tab="det" class="on" role="tab" aria-selected="true" aria-controls="detList">Détections <small id="detCount">0</small></button>
+          <button data-tab="peaks" role="tab" aria-selected="false" aria-controls="peakList">Pics <small id="peakCount">0</small></button>
+        </h3>
+        <ul class="det-list" id="detList" data-tab-pane="det"><li class="empty">Aucune détection pour l’instant</li></ul>
+        <ul class="peak-list" id="peakList" data-tab-pane="peaks" hidden><li class="empty">Aucun pic détecté</li></ul>
+      </section>
+      <section class="panel">
+        <h3><span class="dot" id="srvDot"></span>Serveur supervisé<small id="srvSource">—</small></h3>
+        <div class="kv"><span>Nom</span><b id="srvName">—</b></div>
+        <div class="kv"><span>VERSION</span><b id="srvVersion">—</b></div>
+        <div class="kv"><span>Disponibilité</span><b id="srvUptime">—</b></div>
+        <div class="kv"><span>ms / cycle</span><b id="srvMspt">—</b></div>
+        <div class="spark-row">
+          <div class="spark"><label>Cycles/s</label><canvas id="sparkTps" role="img" aria-label="Historique des cycles par seconde"></canvas></div>
+          <div class="spark"><label>Clients</label><canvas id="sparkPlayers" role="img" aria-label="Historique du nombre de clients"></canvas></div>
+        </div>
+        <div class="srv-msg" id="srvMsg"></div>
+      </section>
+    </aside>
+
+    <!-- ---------- Visualisation 3D ---------- -->
+    <section class="viewport" id="viewport" tabindex="-1" aria-label="Visualisation 3D du spectre (temps × fréquence × intensité)">
+      <div class="gl" id="gl"></div>
+      <div class="labels" id="labels"></div>
+      <div class="vignette"></div>
+
+      <div class="hud" id="hud">
+        <div class="hud-row big">
+          <span class="k">Intensité</span><span class="v" id="hudInt">0%</span><span class="u" id="hudDb">−∞ dB</span>
+        </div>
+        <div class="hud-bar"><i id="hudIntBar"></i></div>
+        <div class="hud-row">
+          <span class="k">F. dominante</span><span class="v" id="hudFreq">—</span><span class="u" id="hudNote"></span>
+        </div>
+        <div class="hud-row source">
+          <span class="k">Source</span><span class="v" id="hudSrc">—</span><span class="u" id="hudSrcConf"></span>
+        </div>
+        <div class="hud-zones">
+          <div class="hz" data-zone="bass"><div class="hz-bar"><i id="hzBass"></i></div><span>Graves</span><b id="hzBassV">0</b></div>
+          <div class="hz" data-zone="mid"><div class="hz-bar"><i id="hzMid"></i></div><span>Médiums</span><b id="hzMidV">0</b></div>
+          <div class="hz" data-zone="treble"><div class="hz-bar"><i id="hzTreble"></i></div><span>Aigus</span><b id="hzTrebleV">0</b></div>
+        </div>
+        <div class="hud-row">
+          <span class="k">Crête</span><span class="v" id="hudPeak">−∞</span><span class="u">dBFS</span><span class="clip" id="hudClip">Saturation</span>
+        </div>
+        <div class="hud-row">
+          <span class="k">Temps</span><span class="v" id="hudTime">00:00.0</span><span class="u" id="hudOffset">Direct</span>
+        </div>
+      </div>
+
+      <div class="mode-badge" id="modeBadge" data-mode="live" role="status"><span class="mb-dot"></span><span id="modeText">Direct</span></div>
+      <div class="peak-flash" id="peakFlash"></div>
+
+      <div class="cam-bar" role="toolbar" aria-label="Caméra">
+        <button data-view="TOP" title="Vue de dessus (1)">Dessus</button>
+        <button data-view="FRONT" title="Vue de face — spectre (2)">Face</button>
+        <button data-view="SIDE" title="Vue de côté — axe du temps (3)">Côté</button>
+        <button data-view="3D" title="Vue 3D (4)">3D</button>
+        <button data-view="RESET" title="Réinitialiser la caméra (R)">Réinitialiser</button>
+        <button id="btnAutoRotate" class="toggle" title="Rotation automatique (A)"><i data-icon="refresh" data-tile="0"></i> Rotation</button>
+      </div>
+
+      <div class="axis-legend">
+        <span><i class="ax"></i>X · temps</span><span><i class="ax"></i>Y · fréquence (log)</span><span><i class="ax"></i>Z · intensité (dBFS)</span>
+        <em>glisser : rotation · clic droit : déplacer · molette : zoom</em>
+      </div>
+
+      <!-- Écran de connexion / erreur -->
+      <div class="overlay" id="overlay" data-state="idle">
+        <div class="card connect-card">
+          <div class="card-icon" data-icon="mic"></div>
+          <h2>Moniteur audio 3D</h2>
+          <p>Connectez le microphone pour générer le terrain audio en temps réel.
+            Les données restent sur cet ordinateur : rien n'est envoyé sur Internet.</p>
+          <button class="btn-mic big" data-action="mic"><span class="ico" data-icon="mic"></span>Connecter le microphone</button>
+          <button class="btn ghost" data-action="demo"><i data-icon="play" data-tile="0"></i> Lancer le signal de démonstration</button>
+          <button class="btn ghost" data-action="file"><i data-icon="folder" data-tile="0" data-icon-color="#3987e5"></i> Analyser un fichier audio</button>
+        </div>
+        <div class="card wait-card">
+          <div class="spinner"></div>
+          <h2>En attente d'autorisation…</h2>
+          <p>Acceptez la demande d'accès au microphone affichée par le navigateur.</p>
+        </div>
+        <div class="card error-card">
+          <div class="card-icon err" data-icon="warning" data-icon-color="var(--err)"></div>
+          <h2 id="errTitle">Erreur microphone</h2>
+          <p id="errMessage"></p>
+          <p class="hint" id="errHint"></p>
+          <code class="err-code" id="errCode"></code>
+          <div class="card-actions">
+            <button class="btn-mic" data-action="mic"><span class="ico" data-icon="refresh"></span>Réessayer</button>
+            <button class="btn ghost" data-action="demo"><i data-icon="play" data-tile="0"></i> Mode démonstration</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Tiroir latéral (couleurs / paramètres) ---------- -->
+    <aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawerTitle">
+      <div class="drawer-head">
+        <h2 id="drawerTitle">Paramètres</h2>
+        <button class="icon-btn" id="drawerClose" title="Fermer (Échap)" aria-label="Fermer le panneau"><i data-icon="close" data-tile="0"></i></button>
+      </div>
+
+      <!-- Couleurs -->
+      <div class="drawer-body" data-pane="colors">
+        <h4>Préréglages</h4>
+        <div class="preset-grid" id="presetGrid"></div>
+        <h4>Couleurs <small id="themeName"></small></h4>
+        <div class="color-list" id="colorList"></div>
+        <h4>Thèmes enregistrés</h4>
+        <div class="row">
+          <input type="text" id="themeSaveName" placeholder="Nom du thème" maxlength="32" aria-label="Nom du thème à enregistrer">
+          <button class="btn" id="btnThemeSave">Enregistrer le thème</button>
+        </div>
+        <div class="custom-list" id="customThemes"></div>
+        <div class="row">
+          <button class="btn ghost" id="btnThemeExport">Copier le JSON</button>
+          <button class="btn ghost" id="btnThemeImport">Importer un JSON</button>
+        </div>
+      </div>
+
+      <!-- Paramètres -->
+      <div class="drawer-body" data-pane="settings">
+        <h4>Entrée audio</h4>
+        <label class="field">Périphérique
+          <span class="row">
+            <select data-setting="deviceId" id="deviceSelect"><option value="">Entrée par défaut</option></select>
+            <button class="icon-btn" id="btnDevices" title="Actualiser la liste" aria-label="Actualiser la liste des périphériques"><i data-icon="refresh" data-tile="0"></i></button>
+          </span>
+        </label>
+        <label class="check"><input type="checkbox" data-setting="rawInput"> Signal brut (sans réduction de bruit / AGC)</label>
+        <label class="field">Taille de FFT (points)
+          <select data-setting="fftSize">
+            <option value="1024">1024</option><option value="2048">2048</option><option value="4096">4096</option>
+            <option value="8192">8192</option><option value="16384">16384</option>
+          </select>
+        </label>
+        <label class="field">Lissage (smoothing) <output data-for="smoothing"></output>
+          <input type="range" min="0" max="0.95" step="0.05" data-setting="smoothing">
+        </label>
+        <label class="field">Plancher (dBFS) <output data-for="minDb"></output>
+          <input type="range" min="-130" max="-50" step="1" data-setting="minDb">
+        </label>
+        <label class="field">Plafond (dBFS) <output data-for="maxDb"></output>
+          <input type="range" min="-40" max="0" step="1" data-setting="maxDb">
+        </label>
+
+        <h4>Zones de fréquences (Hz)</h4>
+        <div class="grid2">
+          <label class="field">Min<input type="number" min="10" max="200" step="1" data-setting="freqMin"></label>
+          <label class="field">Graves → médiums<input type="number" min="40" max="2000" step="10" data-setting="bassMax"></label>
+          <label class="field">Médiums → aigus<input type="number" min="500" max="16000" step="50" data-setting="midMax"></label>
+          <label class="field">Max<input type="number" min="2000" max="24000" step="100" data-setting="freqMax"></label>
+        </div>
+
+        <h4>Identification des sons</h4>
+        <label class="check"><input type="checkbox" data-setting="recogEnabled"> Activer l'identification (oiseaux, animaux, humains)</label>
+        <label class="field">Fréquence d'analyse
+          <select data-setting="recogInterval"><option value="1">toutes les 1 s</option><option value="1.5">toutes les 1,5 s</option><option value="2">toutes les 2 s</option><option value="3">toutes les 3 s</option></select>
+        </label>
+        <label class="field">Confiance min. — sons, animaux, humains <output data-for="soundMinConf"></output>
+          <input type="range" min="0.1" max="0.9" step="0.05" data-setting="soundMinConf">
+        </label>
+        <label class="field">Confiance min. — espèces d'oiseaux <output data-for="birdMinConf"></output>
+          <input type="range" min="0.1" max="0.95" step="0.05" data-setting="birdMinConf">
+        </label>
+        <label class="check"><input type="checkbox" data-setting="birdAlways"> Toujours chercher l'espèce d'oiseau</label>
+        <label class="check"><input type="checkbox" data-setting="useLocation"> Filtrer les espèces selon ma position et la saison</label>
+        <div class="grid2">
+          <label class="field">Latitude<input type="number" step="0.01" min="-90" max="90" data-setting="latitude"></label>
+          <label class="field">Longitude<input type="number" step="0.01" min="-180" max="180" data-setting="longitude"></label>
+        </div>
+        <button class="btn ghost" id="btnGeo"><i data-icon="location" data-icon-color="#e66767"></i> Utiliser ma position</button>
+        <p class="note" id="geoNote"></p>
+
+        <h4>Sauvegarde sur le Bureau</h4>
+        <div class="kv"><span>Dossier</span><b id="dataDir" class="ellipsis">—</b></div>
+        <label class="check"><input type="checkbox" data-setting="saveDetections"> Journal des détections (CSV + JSON)</label>
+        <label class="check"><input type="checkbox" data-setting="saveClips"> Extrait audio (.wav) de chaque détection</label>
+        <p class="note" id="storeNote"></p>
+        <p class="note">Modèles locaux : BirdNET v2.4 — K. Lisa Yang Center for Conservation Bioacoustics (Cornell Lab of Ornithology) &amp; TU Chemnitz, licence CC BY-NC-SA 4.0 (usage non commercial) · YAMNet — Google, Apache 2.0.</p>
+
+        <h4>Visualisation</h4>
+        <label class="field">Qualité graphique
+          <select data-setting="quality"><option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="ULTRA">Ultra</option></select>
+        </label>
+        <label class="field">Fenêtre 3D (zoom temporel)
+          <select data-setting="window3d">
+            <option value="5">5 s</option><option value="10">10 s</option><option value="20">20 s</option>
+            <option value="30">30 s</option><option value="60">60 s</option>
+          </select>
+        </label>
+        <label class="field">Échelle de hauteur <output data-for="heightScale"></output>
+          <input type="range" min="0.3" max="2" step="0.05" data-setting="heightScale">
+        </label>
+        <label class="check"><input type="checkbox" data-setting="wireframe"> Maillage filaire</label>
+        <label class="check"><input type="checkbox" data-setting="contours"> Lignes de niveau</label>
+        <label class="check"><input type="checkbox" data-setting="showLabels"> Repères et libellés 3D</label>
+        <label class="check"><input type="checkbox" data-setting="hudVisible"> HUD de mesures (H)</label>
+
+        <h4>Traînées</h4>
+        <label class="field">Mode
+          <select data-setting="trailMode">
+            <option value="none">Aucune</option><option value="low">Faible</option><option value="medium">Moyenne</option>
+            <option value="high">Forte</option><option value="persistent">Persistante</option>
+          </select>
+        </label>
+        <label class="field">Longueur <output data-for="trailLength"></output>
+          <input type="range" min="0.5" max="60" step="0.5" data-setting="trailLength">
+        </label>
+
+        <h4>Pics</h4>
+        <label class="field">Seuil de détection <output data-for="peakThreshold"></output>
+          <input type="range" min="0.2" max="0.98" step="0.01" data-setting="peakThreshold">
+        </label>
+
+        <h4>Historique</h4>
+        <label class="field">Durée conservée
+          <select data-setting="retention">
+            <option value="30">30 secondes</option><option value="60">1 minute</option>
+            <option value="300">5 minutes</option><option value="600">10 minutes</option>
+          </select>
+        </label>
+        <label class="field">Résolution (tranches / s)
+          <select data-setting="historyRate"><option value="20">20</option><option value="30">30</option><option value="60">60</option></select>
+        </label>
+        <div class="kv"><span>Mémoire</span><b id="histMem">—</b></div>
+        <div class="kv"><span>Enregistré</span><b id="histLen">—</b></div>
+        <button class="btn ghost" id="btnClearHistory">Effacer l'historique</button>
+
+        <h4>Caméra</h4>
+        <label class="check"><input type="checkbox" data-setting="autoRotate"> Rotation automatique</label>
+        <label class="field">Vitesse de rotation <output data-for="autoRotateSpeed"></output>
+          <input type="range" min="0.02" max="0.6" step="0.01" data-setting="autoRotateSpeed">
+        </label>
+
+        <h4>Serveur supervisé</h4>
+        <label class="field">Source
+          <select data-setting="serverSource">
+            <option value="simulated">Simulation</option><option value="websocket">WebSocket</option>
+            <option value="http">API locale (HTTP)</option><option value="json">Fichier JSON</option><option value="off">Désactivé</option>
+          </select>
+        </label>
+        <label class="field">Adresse
+          <input type="text" data-setting="serverUrl" spellcheck="false" placeholder="ws://localhost:8765">
+        </label>
+        <label class="field">Intervalle d'interrogation (ms)
+          <input type="number" min="250" max="60000" step="250" data-setting="serverInterval">
+        </label>
+        <button class="btn" id="btnServerConnect">Se connecter au serveur</button>
+        <p class="note">Exemples : <code>ws://localhost:8765</code> · <code>http://localhost:8080/api/status</code> ·
+          <code>./server-status.example.json</code>. Format décrit dans le README.</p>
+
+        <h4>Raccourcis</h4>
+        <dl class="shortcuts">
+          <dt>Espace</dt><dd>Lecture / pause</dd>
+          <dt>L</dt><dd>Retour au direct</dd>
+          <dt>← / →</dt><dd>Reculer / avancer 1 s (Maj : 5 s)</dd>
+          <dt>J / K</dt><dd>Retour arrière / avance rapide</dd>
+          <dt>[ / ]</dt><dd>Vitesse de lecture</dd>
+          <dt>1 2 3 4 / R</dt><dd>Vues dessus · face · côté · 3D / réinitialiser</dd>
+          <dt>A</dt><dd>Rotation automatique</dd>
+          <dt>T</dt><dd>Mode de traînée suivant</dd>
+          <dt>H · B · C · S</dt><dd>HUD · panneau · couleurs · paramètres</dd>
+          <dt>F</dt><dd>Plein écran</dd>
+        </dl>
+        <button class="btn ghost danger" id="btnResetSettings">Réinitialiser tous les paramètres</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- =============================== TIMELINE ================================ -->
+  <section class="timeline-bar" aria-label="Chronologie">
+    <div class="tl-head">
+      <span>Chronologie</span>
+      <span class="tl-range" id="tlRange">—</span>
+    </div>
+    <div class="tl-wrap">
+      <canvas id="timeline" class="timeline" role="img" aria-label="Chronologie de l'intensité et des pics ; flèches gauche/droite pour naviguer" title="Cliquer/glisser : naviguer · molette : zoom · Maj+molette : défiler · double-clic : direct"></canvas>
+    </div>
+  </section>
+
+  <!-- ============================ BARRE D'OUTILS ============================= -->
+  <footer class="toolbar" aria-label="Lecture et affichage">
+    <div class="tgroup transport">
+      <button id="btnBack" title="Reculer de 5 s (Maj+←)" aria-label="Reculer de 5 secondes"><i data-icon="stepBack" data-tile="0"></i></button>
+      <button id="btnRewind" title="Retour arrière (J)" aria-label="Retour arrière"><i data-icon="rewind" data-tile="0"></i></button>
+      <button id="btnPlay" class="primary" title="Lecture / pause (Espace)"><span id="playIcon"></span><span id="playLabel">Pause</span></button>
+      <button id="btnForward" title="Avance rapide (K)" aria-label="Avance rapide"><i data-icon="forward" data-tile="0"></i></button>
+      <button id="btnFwdStep" title="Avancer de 5 s (Maj+→)" aria-label="Avancer de 5 secondes"><i data-icon="stepFwd" data-tile="0"></i></button>
+      <button id="btnLive" class="live" title="Retour au direct (L)"><span class="live-dot"></span>Direct</button>
+    </div>
+    <div class="tgroup">
+      <label>Vitesse
+        <select data-setting="playbackSpeed" id="speedSelect">
+          <option value="-4">−4×</option><option value="-2">−2×</option><option value="-1">−1×</option><option value="-0.5">−0.5×</option>
+          <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
+        </select>
+      </label>
+      <label>Zoom
+        <select data-setting="timelineZoom" title="Zoom temporel de la timeline">
+          <option value="10">10 s</option><option value="30">30 s</option><option value="60">1 min</option><option value="120">2 min</option>
+          <option value="300">5 min</option><option value="600">10 min</option><option value="0">Tout</option>
+        </select>
+      </label>
+      <label class="hide-md">3D
+        <select data-setting="window3d" title="Durée affichée sur le terrain 3D">
+          <option value="5">5 s</option><option value="10">10 s</option><option value="20">20 s</option><option value="30">30 s</option><option value="60">60 s</option>
+        </select>
+      </label>
+    </div>
+    <div class="tgroup">
+      <label>Traînées
+        <select data-setting="trailMode">
+          <option value="none">Aucune</option><option value="low">Faibles</option><option value="medium">Moyennes</option>
+          <option value="high">Fortes</option><option value="persistent">Persistantes</option>
+        </select>
+      </label>
+      <input type="range" class="hide-md" min="0.5" max="60" step="0.5" data-setting="trailLength" title="Longueur de la traînée" aria-label="Longueur de la traînée (s)">
+      <output class="hide-md" data-for="trailLength"></output>
+    </div>
+    <div class="tgroup">
+      <label>Qualité
+        <select data-setting="quality"><option value="LOW">Basse</option><option value="MEDIUM">Moyenne</option><option value="HIGH">Haute</option><option value="ULTRA">Ultra</option></select>
+      </label>
+      <button id="btnCamera" title="Vue caméra suivante (V)">Caméra <b id="camName">3D</b></button>
+      <button data-drawer="colors" title="Couleurs (C)">Couleurs</button>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

@@ -4,6 +4,7 @@
  * Aucune logique audio ou 3D ici : ce module relie le DOM aux autres
  * modules (settings, theme, audio, transport, visualizer, server).
  */
+import { toast, confirmDialog, promptDialog } from './shell.js';
 import { COLOR_KEYS, PRESETS } from './theme.js';
 import { TRAIL_MODES } from './visualizer.js';
 import { SPEEDS } from './transport.js';
@@ -140,8 +141,8 @@ export class UI {
   onTransport() {
     const t = this.transport;
     const playing = t.mode === 'playing';
-    $('#playIcon').innerHTML = icon(playing || t.isLive ? 'pauseBtn' : 'play', '#fff', { tile: false });
-    $('#playLabel').textContent = playing || t.isLive ? 'PAUSE' : 'PLAY';
+    $('#playIcon').innerHTML = icon(playing || t.isLive ? 'pauseBtn' : 'play', '#141518', { tile: false });
+    $('#playLabel').textContent = playing || t.isLive ? 'Pause' : 'Lecture';
     $('#btnLive').classList.toggle('on', t.isLive);
     $('#btnRewind').classList.toggle('on', playing && t.speed < 0);
     $('#btnForward').classList.toggle('on', playing && t.speed > 1);
@@ -152,10 +153,10 @@ export class UI {
     const t = this.transport;
     const badge = $('#modeBadge');
     let mode = t.mode, text;
-    if (!this.history.length) { mode = 'idle'; text = this.audio.active ? 'BUFFERING' : 'NO SIGNAL'; }
-    else if (t.isLive) text = this.audio.active ? 'LIVE' : 'LIVE · INPUT STOPPED';
-    else if (mode === 'paused') text = 'PAUSED';
-    else text = t.speed < 0 ? `REWIND ${Math.abs(t.speed)}×` : `PLAYBACK ${t.speed}×`;
+    if (!this.history.length) { mode = 'idle'; text = this.audio.active ? 'Mise en mémoire…' : 'Aucun signal'; }
+    else if (t.isLive) text = this.audio.active ? 'Direct' : 'Direct · entrée arrêtée';
+    else if (mode === 'paused') text = 'En pause';
+    else text = t.speed < 0 ? `Retour arrière ${Math.abs(t.speed)}×` : `Relecture ${t.speed}×`;
     badge.dataset.mode = mode;
     $('#modeText').textContent = text;
   }
@@ -177,8 +178,8 @@ export class UI {
 
   _markView(name) {
     if (name) this.view = name;
-    for (const b of $$('[data-view]')) b.classList.toggle('active', b.dataset.view === name);
-    $('#camName').textContent = name || 'FREE';
+    for (const b of $$('[data-view]')) { b.classList.toggle('active', b.dataset.view === name); b.setAttribute('aria-pressed', String(b.dataset.view === name)); }
+    $('#camName').textContent = { TOP: 'Dessus', FRONT: 'Face', SIDE: 'Côté', '3D': '3D' }[name] || 'Libre';
   }
 
   /* ------------------------------------------------------------ Micro ----- */
@@ -248,18 +249,18 @@ export class UI {
     status.className = 'mic-status';
     if (state === 'active') {
       const demo = a.source === 'demo' || a.source === 'file';
-      $('#btnMicLabel').textContent = a.source === 'file' ? 'STOP FILE' : demo ? 'STOP DEMO' : 'DISCONNECT';
-      status.textContent = a.source === 'file' ? '● FICHIER EN LECTURE' : demo ? '● DEMO SIGNAL ACTIVE' : '● MICROPHONE ACTIVE';
+      $('#btnMicLabel').textContent = a.source === 'file' ? 'Arrêter le fichier' : demo ? 'Arrêter la démonstration' : 'Déconnecter le microphone';
+      status.textContent = a.source === 'file' ? '● Fichier en lecture' : demo ? '● Signal de démonstration' : '● Microphone actif';
       status.classList.add(demo ? 'demo' : 'on');
       dot.classList.add(demo ? 'demo' : 'on');
-      tb.textContent = a.source === 'file' ? 'FILE' : demo ? 'DEMO' : 'LIVE';
+      tb.textContent = a.source === 'file' ? 'Fichier' : demo ? 'Démo' : 'Micro';
       tb.dataset.state = demo ? 'demo' : 'on';
     } else {
-      $('#btnMicLabel').textContent = 'CONNECT MICROPHONE';
-      if (state === 'requesting') { status.textContent = '◌ EN ATTENTE D\'AUTORISATION…'; dot.classList.add('warn'); }
-      else if (state === 'error') { status.textContent = a.error?.title?.toUpperCase() || 'ERREUR'; status.classList.add('err'); dot.classList.add('err'); }
-      else status.textContent = '○ MICROPHONE OFF';
-      tb.textContent = state === 'error' ? 'ERROR' : 'OFFLINE';
+      $('#btnMicLabel').textContent = 'Connecter le microphone';
+      if (state === 'requesting') { status.textContent = '◌ En attente d\'autorisation…'; dot.classList.add('warn'); }
+      else if (state === 'error') { status.textContent = a.error?.title || 'Erreur'; status.classList.add('err'); dot.classList.add('err'); }
+      else status.textContent = '○ Microphone coupé';
+      tb.textContent = state === 'error' ? 'Erreur' : 'Arrêtée';
       tb.dataset.state = state === 'error' ? 'error' : 'off';
     }
     if (state === 'error' && a.error) {
@@ -294,7 +295,7 @@ export class UI {
     $('#drawer').setAttribute('aria-hidden', String(!name));
     for (const p of $$('.drawer-body')) p.classList.toggle('active', p.dataset.pane === name);
     for (const b of $$('[data-drawer]')) b.classList.toggle('on', b.dataset.drawer === name);
-    if (name) $('#drawerTitle').textContent = name === 'colors' ? 'COLORS' : 'SETTINGS';
+    if (name) $('#drawerTitle').textContent = name === 'colors' ? 'Couleurs' : 'Paramètres';
     if (name === 'settings') this._updateHistoryInfo();
   }
 
@@ -327,12 +328,13 @@ export class UI {
     });
     $('#themeSaveName').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btnThemeSave').click(); });
     $('#btnThemeExport').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(th.toJSON()); this.toast('Thème copié dans le presse-papiers'); }
-      catch { window.prompt('Copiez le thème :', th.toJSON()); }
+      try { await navigator.clipboard.writeText(th.toJSON()); toast('Thème copié dans le presse-papiers', { type: 'ok' }); }
+      catch { await promptDialog({ title: 'Exporter le thème', label: 'JSON du thème (à copier)', value: th.toJSON(), confirmLabel: 'Fermer' }); }
     });
-    $('#btnThemeImport').addEventListener('click', () => {
-      const text = window.prompt('Collez le JSON du thème :');
-      if (text && !th.fromJSON(text)) this.toast('JSON de thème invalide');
+    $('#btnThemeImport').addEventListener('click', async () => {
+      const text = await promptDialog({ title: 'Importer un thème', label: 'JSON du thème', hint: 'Collez le texte obtenu avec « Copier le JSON ».', required: true, confirmLabel: 'Importer' });
+      if (text && !th.fromJSON(text)) toast('JSON de thème invalide : aucune modification appliquée.', { type: 'err' });
+      else if (text) toast('Thème importé', { type: 'ok' });
     });
     th.on('change', () => this._syncColors());
     this._syncColors();
@@ -355,10 +357,14 @@ export class UI {
       const row = document.createElement('div');
       row.className = 'ct';
       const c = th.custom[name];
-      row.innerHTML = `<button class="btn ghost"><span class="swatches" style="width:3rem">${['bass', 'mid', 'treble'].map((k) => `<i style="background:${c[k]}"></i>`).join('')}</span></button><button class="icon-btn" title="Supprimer">${icon('close', 'var(--err)', { tile: false })}</button>`;
+      row.innerHTML = `<button class="btn ghost"><span class="swatches" style="width:3rem" aria-hidden="true">${['bass', 'mid', 'treble'].map((k) => `<i style="background:${c[k]}"></i>`).join('')}</span></button><button class="icon-btn" title="Supprimer" aria-label="Supprimer le thème ${name.replace(/"/g, '')}">${icon('close', 'var(--err)', { tile: false })}</button>`;
       row.children[0].append(name);
       row.children[0].addEventListener('click', () => th.apply(name));
-      row.children[1].addEventListener('click', () => th.deleteCustom(name));
+      row.children[1].addEventListener('click', () => {
+        const saved = { ...th.custom[name] };
+        th.deleteCustom(name);
+        toast(`Thème « ${name} » supprimé`, { action: { label: 'Annuler', run: () => th.restoreCustom(name, saved) } });
+      });
       box.appendChild(row);
     }
     // Couleur de la barre d'adresse mobile / fenêtre.
@@ -375,12 +381,12 @@ export class UI {
     srv.on('status', ({ connection, message, source }) => {
       const dot = $('#srvDot');
       dot.className = `dot ${connection === 'connected' ? 'on' : connection === 'connecting' ? 'warn' : connection === 'error' ? 'err' : ''}`;
-      $('#srvSource').textContent = source === 'off' ? 'DISABLED' : source.toUpperCase();
+      $('#srvSource').textContent = { off: 'Désactivé', simulated: 'Simulation', websocket: 'WebSocket', http: 'HTTP', json: 'JSON' }[source] || source;
       $('#srvMsg').textContent = message || '';
       if (connection !== 'connected') {
         const st = $('#tbStatus');
         st.dataset.state = connection === 'connecting' ? 'connecting' : 'offline';
-        st.textContent = connection === 'connecting' ? 'CONNECTING' : source === 'off' ? 'N/A' : 'OFFLINE';
+        st.textContent = connection === 'connecting' ? 'Connexion…' : source === 'off' ? 'Désactivé' : 'Hors ligne';
       }
     });
     srv.on('data', (d) => this._renderServer(d));
@@ -429,7 +435,8 @@ export class UI {
 
   _bindKeyboard() {
     window.addEventListener('keydown', (e) => {
-      if (e.target.closest('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target.closest('input, select, textarea, dialog') || document.querySelector('dialog[open]') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === ' ' && e.target.closest('button, a, [role="tab"]')) return;   // Espace active le bouton focalisé
       const t = this.transport, s = this.settings;
       const k = e.key.toLowerCase();
       const map = {
@@ -476,15 +483,19 @@ export class UI {
 
   _bindMisc() {
     $('#btnSidebar').addEventListener('click', () => this.toggleSidebar());
-    $('#btnClearHistory').addEventListener('click', () => {
+    $('#btnClearHistory').addEventListener('click', async () => {
+      if (!this.history.length) return;
+      const r = await confirmDialog({ title: 'Effacer l’historique audio ?', message: `Les ${formatClock(this.history.duration, 0)} enregistrées en mémoire et les ${this.history.peaks.length} pics seront perdus. Les détections déjà sauvegardées sur le Bureau sont conservées.`, confirmLabel: 'Effacer l’historique', danger: true });
+      if (!r.ok) return;
       this.history.clear();
       this._peakItems = [];
       this._renderPeakList();
       this.transport.goLive();
       this._updateHistoryInfo();
     });
-    $('#btnResetSettings').addEventListener('click', () => {
-      if (window.confirm('Réinitialiser tous les paramètres ?')) this.settings.reset();
+    $('#btnResetSettings').addEventListener('click', async () => {
+      const r = await confirmDialog({ title: 'Réinitialiser tous les paramètres ?', message: 'Entrée audio, FFT, zones de fréquences, identification, visualisation et serveur reviennent aux valeurs par défaut. Les thèmes enregistrés sont conservés.', confirmLabel: 'Réinitialiser', danger: true });
+      if (r.ok) { this.settings.reset(); toast('Paramètres réinitialisés', { type: 'ok' }); }
     });
     $('#peakList').addEventListener('click', (e) => {
       const li = e.target.closest('li[data-time]');
@@ -568,10 +579,10 @@ export class UI {
       document.querySelector(`.band-row[data-zone="${z}"]`).classList.toggle('dominant', dom[0] === z);
       document.querySelector(`.hz[data-zone="${z}"]`).classList.toggle('dominant', dom[0] === z);
     }
-    $('#domZone').textContent = { bass: 'GRAVES', mid: 'MÉDIUMS', treble: 'AIGUS' }[dom[0]] || '—';
+    $('#domZone').textContent = { bass: 'Graves', mid: 'Médiums', treble: 'Aigus' }[dom[0]] || '—';
 
     $('#hudInt').textContent = pct(it);
-    $('#hudDb').textContent = f && f.rmsDb > -120 ? `${f.rmsDb.toFixed(1)} dB` : '−∞ dB';
+    $('#hudDb').textContent = f && f.rmsDb > -120 ? `${f.rmsDb.toFixed(1)} dBFS` : '−∞ dBFS';
     const df = f?.dominantFrequency || 0;
     $('#hudFreq').textContent = formatFreq(df);
     const note = noteName(df);
@@ -579,20 +590,20 @@ export class UI {
     $('#hudPeak').textContent = f && f.peakDb > -120 ? f.peakDb.toFixed(1) : '−∞';
     $('#hudClip').classList.toggle('on', !!f?.clipping);
     $('#hudTime').textContent = formatClock(v.cursor);
-    $('#hudOffset').textContent = this.transport.isLive ? 'LIVE' : formatOffset(v.cursor - v.liveTime);
-    $('#audioAt').textContent = this.transport.isLive ? 'LIVE' : `@ ${formatClock(v.cursor)}`;
+    $('#hudOffset').textContent = this.transport.isLive ? 'Direct' : formatOffset(v.cursor - v.liveTime);
+    $('#audioAt').textContent = this.transport.isLive ? 'Direct' : `@ ${formatClock(v.cursor)}`;
 
     // Micro (toujours le direct).
     $('#micDom').textContent = lv?.dominantFrequency ? `${formatFreq(lv.dominantFrequency)} · ${noteName(lv.dominantFrequency).name}` : '—';
     $('#micVol').textContent = lv && lv.rmsDb > -120 ? `${lv.rmsDb.toFixed(1)} dBFS` : '—';
     const clip = $('#micClip');
-    clip.textContent = lv?.clipping ? 'CLIPPING!' : 'NONE';
+    clip.textContent = lv?.clipping ? 'Saturation !' : 'Aucune';
     clip.className = lv?.clipping ? 'bad' : 'ok';
 
     $('#tbFps').textContent = Math.round(v.fps);
     $('#tbClock').textContent = formatClock(v.liveTime, 0);
     const h = this.history;
-    $('#tlRange').textContent = h.length ? `BUFFER ${formatClock(h.duration, 0)} / ${formatClock(h.retention, 0)} · ${h.peaks.length} PEAKS` : 'BUFFER VIDE';
+    $('#tlRange').textContent = h.length ? `Mémoire ${formatClock(h.duration, 0)} / ${formatClock(h.retention, 0)} · ${h.peaks.length} pics` : 'Mémoire vide';
     this._updateBadge();
     if (this.drawer === 'settings') this._updateHistoryInfo();
     if (this._peakItems.length && this._peakItems[this._peakItems.length - 1].time < h.oldestTime) this._renderPeakList();

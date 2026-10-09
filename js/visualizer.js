@@ -572,7 +572,7 @@ export class Visualizer {
     this.lblTicks = Array.from({ length: MAX_TICKS }, () => L.add('tick-time'));
     this.lblFreq = FREQ_TICKS.map(() => L.add('tick-freq'));
     this.lblDb = [0.25, 0.5, 0.75, 1].map(() => L.add('tick-db'));
-    this.lblAxes = ['X · TEMPS', 'Y · FRÉQUENCE', 'Z · INTENSITÉ'].map((t) => { const it = L.add('axis-title'); L.text(it, t); return it; });
+    this.lblAxes = ['X · temps', 'Y · fréquence', 'Z · intensité'].map((t) => { const it = L.add('axis-title'); L.text(it, t); return it; });
     this.lblZones = ['bass', 'mid', 'treble'].map((z) => L.add(`zone zone-${z}`));
     this.lblCursor = L.add('cursor-tag');
     this.lblPeaks = Array.from({ length: PEAK_LABELS }, () => L.add('peak-tag'));
@@ -696,7 +696,7 @@ export class Visualizer {
 
     // Libellé du curseur.
     this.lblCursor.pos.set(this.cursorX, H * 1.15 + 0.4, D / 2);
-    this.labels.text(this.lblCursor, s.live ? `● LIVE  ${formatClock(cursor)}` : `▼ ${formatClock(cursor)}`);
+    this.labels.text(this.lblCursor, s.live ? `● Direct  ${formatClock(cursor)}` : `▼ ${formatClock(cursor)}`);
     this.lblCursor.div.classList.toggle('live', !!s.live);
 
     // Brouillard adapté à la distance caméra.
@@ -908,7 +908,7 @@ export class Visualizer {
   _updateZones(z) {
     const levels = [z.bass, z.mid, z.treble];
     const max = Math.max(...levels);
-    const names = ['GRAVES', 'MÉDIUMS', 'AIGUS'];
+    const names = ['Graves', 'Médiums', 'Aigus'];
     levels.forEach((l, i) => {
       this.zoneMats[i].opacity = 0.06 + 0.5 * l;
       const lbl = this.lblZones[i];

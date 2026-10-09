@@ -97,6 +97,13 @@ export class ThemeManager extends Emitter {
     this.emit('change', this.colors);
   }
 
+  /** Restaure un thème supprimé (action « Annuler »). */
+  restoreCustom(name, colors) {
+    this.custom = { ...this.custom, [name]: { ...colors } };
+    storage.set(CUSTOM_KEY, this.custom);
+    this.emit('change', this.colors);
+  }
+
   /** Exporte / importe le thème courant au format JSON. */
   toJSON() { return JSON.stringify({ name: this.presetName, colors: this.colors }, null, 2); }
   fromJSON(text) {
