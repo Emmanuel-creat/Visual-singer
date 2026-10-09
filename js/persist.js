@@ -1,5 +1,5 @@
 /**
- * persist.js — Sauvegarde sur le Bureau via le serveur local (server.py).
+ * persist.js : Sauvegarde sur le Bureau via le serveur local (server.py).
  *
  * Si l'application est servie par `python server.py`, les réglages, thèmes,
  * détections et extraits audio sont écrits dans « Bureau/Visual Singer ».

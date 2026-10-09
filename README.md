@@ -41,10 +41,10 @@ Tout est embarqué (Three.js, TensorFlow.js, modèles) : aucun service cloud. Il
 
 | Page | Lanceur | Usage |
 |------|---------|-------|
-| `index.html` — **Accueil** | raccourci *Visual Singer - Accueil* | présentation des trois outils, état des services locaux (sauvegarde Bureau, moteur Cours, GPU, LLM) |
-| `detecteur.html` — **Détecteur** | raccourci *Visual Singer - Détecteur* | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
-| `sommeil.html` — **Sommeil** | raccourci *Visual Singer - Sommeil* | surveillance acoustique de la nuit, statistiques, interprétations, historique |
-| `cours.html` — **Cours** | raccourci *Visual Singer - Cours* | transcription, résumés, notions et croisement d'un cours audio/vidéo avec son support |
+| `index.html` (**Accueil**) | raccourci *Visual Singer - Accueil* | présentation des trois outils, état des services locaux (sauvegarde Bureau, moteur Cours, GPU, LLM) |
+| `detecteur.html` (**Détecteur**) | raccourci *Visual Singer - Détecteur* | visualisation 3D temps réel, identification des oiseaux, animaux, humains |
+| `sommeil.html` (**Sommeil**) | raccourci *Visual Singer - Sommeil* | surveillance acoustique de la nuit, statistiques, interprétations, historique |
+| `cours.html` (**Cours**) | raccourci *Visual Singer - Cours* | transcription, résumés, notions et croisement d'un cours audio/vidéo avec son support |
 
 Le détecteur et Sommeil partagent le moteur audio, les modèles et la sauvegarde sur le Bureau. ### Application de bureau (`app.py`)
 
@@ -308,7 +308,7 @@ Choisir la source dans **SETTINGS → SERVEUR** :
 
 | Source | Adresse (exemple) | Fonctionnement |
 |--------|-------------------|----------------|
-| Simulation | — | valeurs factices (par défaut) |
+| Simulation | - | valeurs factices (par défaut) |
 | WebSocket | `ws://localhost:8765` | le serveur envoie un message JSON à chaque mise à jour (reconnexion automatique) |
 | API locale (HTTP) | `http://localhost:8080/api/status` | requête GET à intervalle régulier |
 | Fichier JSON | `./server-status.example.json` | fichier écrit par le serveur et relu à intervalle régulier |

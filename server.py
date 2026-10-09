@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Visual Singer — serveur local (bibliothèque standard Python uniquement).
+Visual Singer - serveur local (bibliothèque standard Python uniquement).
 
   python server.py            → http://localhost:8080
 
@@ -369,7 +369,7 @@ def main():
             stream.reconfigure(encoding="utf-8", errors="replace")
         except Exception:
             pass
-    ap = argparse.ArgumentParser(description="Visual Singer — serveur local")
+    ap = argparse.ArgumentParser(description="Visual Singer - serveur local")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--data", default=os.environ.get("VS_DATA_DIR"))
     ap.add_argument("--no-browser", action="store_true")

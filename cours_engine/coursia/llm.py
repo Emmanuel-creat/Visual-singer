@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Iterator
 
 import httpx
@@ -59,10 +60,31 @@ def ctx_size(model: str) -> int:
     return recommend()["llm_ctx"] if "35b" in model or "27b" in model else 16384
 
 
+DASH_RULE = "Style : n'utilise jamais de tiret cadratin ni de tiret demi-cadratin ; utilise une virgule, deux-points ou des parenthèses."
+_DASH = re.compile("\\s*[\u2014\u2013]\\s*(?=\\D)|\\s+[\u2014\u2013]\\s+")
+
+
+def undash(value):
+    """Retire les tirets cadratins (et demi-cadratins d'incise) des textes produits par le modèle."""
+    if isinstance(value, str):
+        return _DASH.sub(", ", value).replace("\u2014", "-")
+    if isinstance(value, list):
+        return [undash(v) for v in value]
+    if isinstance(value, dict):
+        return {k: undash(v) for k, v in value.items()}
+    return value
+
+
+def _with_rule(messages: list[dict]) -> list[dict]:
+    if messages and messages[0].get("role") == "system":
+        return [{**messages[0], "content": f"{messages[0]['content']}\n{DASH_RULE}"}, *messages[1:]]
+    return [{"role": "system", "content": DASH_RULE}, *messages]
+
+
 def chat(messages: list[dict], model: str, *, schema: dict | None = None, temperature: float = 0.2,
          num_ctx: int | None = None, think: bool = False, timeout: float = 1800) -> str:
     body = {
-        "model": model, "messages": messages, "stream": False, "think": think, "keep_alive": "15m",
+        "model": model, "messages": _with_rule(messages), "stream": False, "think": think, "keep_alive": "15m",
         "options": {"temperature": temperature, "num_ctx": num_ctx or ctx_size(model), "top_p": 0.9, "repeat_penalty": 1.05},
     }
     if schema:
@@ -81,7 +103,7 @@ def chat_json(messages: list[dict], model: str, schema: dict, retries: int = 2, 
     for attempt in range(retries + 1):
         out = chat(messages, model, schema=schema, **kw)
         try:
-            return json.loads(out)
+            return undash(json.loads(out))
         except json.JSONDecodeError:
             last = out
             messages = messages + [{"role": "assistant", "content": out},
@@ -90,7 +112,7 @@ def chat_json(messages: list[dict], model: str, schema: dict, retries: int = 2, 
 
 
 def stream(messages: list[dict], model: str, *, temperature: float = 0.3, num_ctx: int | None = None, think: bool = False) -> Iterator[str]:
-    body = {"model": model, "messages": messages, "stream": True, "think": think, "keep_alive": "15m",
+    body = {"model": model, "messages": _with_rule(messages), "stream": True, "think": think, "keep_alive": "15m",
             "options": {"temperature": temperature, "num_ctx": num_ctx or ctx_size(model)}}
     with httpx.stream("POST", f"{OLLAMA_URL}/api/chat", json=body, timeout=None) as r:
         if r.status_code != 200:

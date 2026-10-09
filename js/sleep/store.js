@@ -1,5 +1,5 @@
 /**
- * store.js — Nuits enregistrées dans « Bureau/Visual Singer/sommeil » (via server.py).
+ * store.js : Nuits enregistrées dans « Bureau/Visual Singer/sommeil » (via server.py).
  */
 import { DesktopStore, encodeWav } from '../persist.js';
 

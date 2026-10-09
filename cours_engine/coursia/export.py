@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from .llm import undash
 from .steps.analyze import fmt
 from .steps.documents import soffice
 from .store import Project
@@ -40,7 +41,7 @@ def build_markdown(project: Project, with_transcript: bool = True) -> str:
         out.append("")
     if a.get("formulas"):
         out += ["## Formules et règles", ""]
-        out += [f"- `{f['formule']}` — {f['explication']} ({fmt(f.get('t') or 0)})" for f in a["formulas"]]
+        out += [f"- `{f['formule']}` : {f['explication']} ({fmt(f.get('t') or 0)})" for f in a["formulas"]]
         out.append("")
     if a.get("examples"):
         out += ["## Exemples", ""] + [f"- {e['exemple']} ({fmt(e.get('t') or 0)})" for e in a["examples"]] + [""]
@@ -120,7 +121,7 @@ def markdown_to_docx(md: str, path: Path) -> None:
 
 
 def export(project: Project, fmt_: str, with_transcript: bool = True) -> Path:
-    md = build_markdown(project, with_transcript)
+    md = undash(build_markdown(project, with_transcript))
     title = re.sub(r"[^\w\- ]+", "", project.meta().get("title", "cours")).strip().replace(" ", "_")[:60] or "cours"
     project.exports.mkdir(exist_ok=True)
     if fmt_ == "md":

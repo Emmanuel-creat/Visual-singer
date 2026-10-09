@@ -98,7 +98,7 @@ def section_prompt(sec: dict, paras: list[dict], speakers: list[str], units_by_i
         u = units_by_id.get(uid)
         if u:
             label = "Diapositive" if u["kind"] == "slide" else "Page" if u["kind"] == "page" else "Section"
-            support.append(f"[{label} {u['n']} — {u.get('doc_name', '')}]\n{unit_text(u)[:1800]}")
+            support.append(f"[{label} {u['n']} : {u.get('doc_name', '')}]\n{unit_text(u)[:1800]}")
     parts = [f"SECTION {sec['id'] + 1} ({fmt(sec['start'])} – {fmt(sec['end'])})", "", "TRANSCRIPTION :", transcript]
     if support:
         parts += ["", "SUPPORT DE COURS ASSOCIÉ À CE PASSAGE :", "\n\n".join(support)]
@@ -115,7 +115,7 @@ def section_prompt(sec: dict, paras: list[dict], speakers: list[str], units_by_i
         "- formules : formules, équations, règles (en LaTeX si mathématique) avec leur explication ;\n"
         "- exemples : exemples ou cas concrets donnés à l'oral ;\n"
         "- a_retenir : ce que l'enseignant souligne comme important (« retenez », « attention », « c'est au programme »…) ;\n"
-        "- ecarts_support : uniquement si un support est fourni — contradiction (l'oral contredit le support), difference "
+        "- ecarts_support : uniquement si un support est fourni : contradiction (l'oral contredit le support), difference "
         "(formulation ou valeur différente), ajout_oral (notion/explication donnée à l'oral absente du support), "
         "non_explique (élément important du support associé non abordé à l'oral) ; indique le numéro de diapositive/page si pertinent ;\n"
         "- questions : 2 à 4 questions de révision avec leur réponse, tirées de ce passage.\n"
@@ -176,7 +176,7 @@ def run(project: Project, ctx, paragraphs: dict, documents: dict, index: dict) -
     ctx.log("Résumé global, plan et notions essentielles…")
     digest = []
     for r in results:
-        digest.append(f"## Section {r['section'] + 1} — {r['titre']} ({fmt(r['start'])}–{fmt(r['end'])})\n{r['resume']}\n"
+        digest.append(f"## Section {r['section'] + 1} : {r['titre']} ({fmt(r['start'])}–{fmt(r['end'])})\n{r['resume']}\n"
                       + "".join(f"- {p}\n" for p in r.get("points_cles", [])[:8])
                       + ("Notions : " + ", ".join(n["terme"] for n in r.get("notions", [])) + "\n" if r.get("notions") else ""))
     doc_titles = sorted({u.get("doc_name", "") for u in units if u.get("doc_name")})

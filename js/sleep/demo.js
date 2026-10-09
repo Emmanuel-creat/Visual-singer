@@ -1,5 +1,5 @@
 /**
- * demo.js — Génère une nuit synthétique réaliste (données uniquement, sans audio)
+ * demo.js : Génère une nuit synthétique réaliste (données uniquement, sans audio)
  * pour découvrir l'interface et tester les statistiques.
  */
 import { CATS } from './categories.js';
@@ -105,7 +105,7 @@ export function demoNight({ startHour = 23.3, durMin = 465, seed = 7, snoreLevel
 
   const night = {
     id: `demo-${new Date(start).toISOString().slice(0, 10)}`, version: 1, demo: true,
-    app: 'Visual Singer — Sommeil', start, end: start + N * 1000, sampleRate: 48000,
+    app: 'Visual Singer - Sommeil', start, end: start + N * 1000, sampleRate: 48000,
     lv, sc, ss, minutes, events, pauses, summary: null,
   };
   night.summary = summarize(night);

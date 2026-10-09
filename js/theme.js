@@ -1,5 +1,5 @@
 /**
- * theme.js — Couleurs personnalisables, presets et thèmes sauvegardés.
+ * theme.js : Couleurs personnalisables, presets et thèmes sauvegardés.
  *
  * Les couleurs sont appliquées :
  *  - à l'interface via des variables CSS (--bass, --accent, --bg…)

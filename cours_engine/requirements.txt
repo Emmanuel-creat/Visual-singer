@@ -1,4 +1,4 @@
-# Visual Singer — Cours : moteur d'analyse local (Python 3.12)
+# Visual Singer - Cours : moteur d'analyse local (Python 3.12)
 # PyTorch CUDA 12.8 (indispensable pour les GPU RTX 50xx / Blackwell) :
 #   uv pip install --native-tls torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 # puis, en verrouillant ces versions CUDA :

@@ -1,5 +1,5 @@
 /**
- * icons.js — Icônes « verre sombre » : tuile arrondie noire au liseré clair,
+ * icons.js : Icônes « verre sombre » : tuile arrondie noire au liseré clair,
  * forme principale gris givré, accent coloré qui diffuse sa lumière à travers.
  *
  *   icon(name, color, { tile = true, title })  → chaîne SVG

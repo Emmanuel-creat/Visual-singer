@@ -1,5 +1,5 @@
 /**
- * history.js — Stockage circulaire des analyses audio (pas de son brut).
+ * history.js : Stockage circulaire des analyses audio (pas de son brut).
  *
  * Chaque tranche conserve :
  *   timestamp, bands[BANDS] (Uint8), bass, mid, treble, intensity,

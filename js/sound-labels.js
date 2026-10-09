@@ -1,5 +1,5 @@
 /**
- * sound-labels.js — Catégories et noms français des classes YAMNet (AudioSet, 521 classes).
+ * sound-labels.js : Catégories et noms français des classes YAMNet (AudioSet, 521 classes).
  *
  * Les indices suivent models/yamnet/yamnet_class_map.csv.
  * Les classes sans traduction gardent leur nom anglais.

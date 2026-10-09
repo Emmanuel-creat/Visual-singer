@@ -1,5 +1,5 @@
 /**
- * identify-panel.js — Affichage de l'identification des sons :
+ * identify-panel.js : Affichage de l'identification des sons :
  * source actuelle, scores par catégorie, candidats, journal des détections.
  */
 import { CATEGORIES } from './sound-labels.js';

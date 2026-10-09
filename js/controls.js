@@ -1,5 +1,5 @@
 /**
- * controls.js — Interface : boutons, panneaux, paramètres, couleurs, raccourcis, affichages.
+ * controls.js : Interface : boutons, panneaux, paramètres, couleurs, raccourcis, affichages.
  *
  * Aucune logique audio ou 3D ici : ce module relie le DOM aux autres
  * modules (settings, theme, audio, transport, visualizer, server).
@@ -275,9 +275,9 @@ export class UI {
 
   _updateMicInfo() {
     const a = this.audio;
-    $('#micDevice').textContent = a.active ? a.deviceLabel : '—';
+    $('#micDevice').textContent = a.active ? a.deviceLabel : '-';
     $('#micDevice').title = a.deviceLabel || '';
-    $('#micRate').textContent = a.sampleRate ? `${(a.sampleRate / 1000).toFixed(1)} kHz` : '—';
+    $('#micRate').textContent = a.sampleRate ? `${(a.sampleRate / 1000).toFixed(1)} kHz` : '-';
     $('#micFft').textContent = a.analyser ? `${a.fftSize} · ${(a.sampleRate / a.fftSize).toFixed(1)} Hz/bin` : String(this.settings.get('fftSize'));
   }
 
@@ -396,15 +396,15 @@ export class UI {
     const st = $('#tbStatus');
     st.dataset.state = d.status;
     st.textContent = ({ online: 'En ligne', offline: 'Hors ligne', starting: 'Démarrage', stopping: 'Arrêt' })[d.status] || d.status;
-    $('#tbPlayers').textContent = `${d.players.online} / ${d.players.max || '—'}`;
-    $('#tbTps').textContent = d.tps != null ? `${d.tps.toFixed(1)} TPS` : '— TPS';
+    $('#tbPlayers').textContent = `${d.players.online} / ${d.players.max || '-'}`;
+    $('#tbTps').textContent = d.tps != null ? `${d.tps.toFixed(1)} TPS` : '- TPS';
     $('#tbTps').style.color = d.tps == null ? '' : d.tps >= 19 ? 'var(--ok)' : d.tps >= 15 ? 'var(--warn)' : 'var(--err)';
-    $('#tbCpu').textContent = d.cpu != null ? `${Math.round(d.cpu)}%` : '—';
-    $('#tbRam').textContent = d.ram.used != null ? `${d.ram.used.toFixed(1)}${d.ram.max ? ` / ${d.ram.max}` : ''} Go` : '—';
+    $('#tbCpu').textContent = d.cpu != null ? `${Math.round(d.cpu)}%` : '-';
+    $('#tbRam').textContent = d.ram.used != null ? `${d.ram.used.toFixed(1)}${d.ram.max ? ` / ${d.ram.max}` : ''} Go` : '-';
     $('#srvName').textContent = d.name;
-    $('#srvVersion').textContent = d.version || '—';
-    $('#srvUptime').textContent = d.uptime != null ? formatClock(d.uptime, 0) : '—';
-    $('#srvMspt').textContent = d.mspt != null ? `${d.mspt.toFixed(1)} ms` : '—';
+    $('#srvVersion').textContent = d.version || '-';
+    $('#srvUptime').textContent = d.uptime != null ? formatClock(d.uptime, 0) : '-';
+    $('#srvMspt').textContent = d.mspt != null ? `${d.mspt.toFixed(1)} ms` : '-';
     const h = this.server.history;
     this._spark($('#sparkTps'), h.tps, 0, 20, this.theme.colors.accent);
     this._spark($('#sparkPlayers'), h.players, 0, Math.max(1, d.players.max || Math.max(...h.players)), this.theme.colors.treble);
@@ -579,7 +579,7 @@ export class UI {
       document.querySelector(`.band-row[data-zone="${z}"]`).classList.toggle('dominant', dom[0] === z);
       document.querySelector(`.hz[data-zone="${z}"]`).classList.toggle('dominant', dom[0] === z);
     }
-    $('#domZone').textContent = { bass: 'Graves', mid: 'Médiums', treble: 'Aigus' }[dom[0]] || '—';
+    $('#domZone').textContent = { bass: 'Graves', mid: 'Médiums', treble: 'Aigus' }[dom[0]] || '-';
 
     $('#hudInt').textContent = pct(it);
     $('#hudDb').textContent = f && f.rmsDb > -120 ? `${f.rmsDb.toFixed(1)} dBFS` : '−∞ dBFS';
@@ -594,8 +594,8 @@ export class UI {
     $('#audioAt').textContent = this.transport.isLive ? 'Direct' : `@ ${formatClock(v.cursor)}`;
 
     // Micro (toujours le direct).
-    $('#micDom').textContent = lv?.dominantFrequency ? `${formatFreq(lv.dominantFrequency)} · ${noteName(lv.dominantFrequency).name}` : '—';
-    $('#micVol').textContent = lv && lv.rmsDb > -120 ? `${lv.rmsDb.toFixed(1)} dBFS` : '—';
+    $('#micDom').textContent = lv?.dominantFrequency ? `${formatFreq(lv.dominantFrequency)} · ${noteName(lv.dominantFrequency).name}` : '-';
+    $('#micVol').textContent = lv && lv.rmsDb > -120 ? `${lv.rmsDb.toFixed(1)} dBFS` : '-';
     const clip = $('#micClip');
     clip.textContent = lv?.clipping ? 'Saturation !' : 'Aucune';
     clip.className = lv?.clipping ? 'bad' : 'ok';

@@ -1,5 +1,5 @@
 /**
- * quality.js — Échelle « qualité » : vert = favorable, rouge = défavorable,
+ * quality.js : Échelle « qualité » : vert = favorable, rouge = défavorable,
  * dégradé continu entre les deux (interpolation OKLab, milieu ambre).
  *
  * Palette validée sur fond sombre (#1a1b1f) : #e0384a → #c4851a → #14a88a,

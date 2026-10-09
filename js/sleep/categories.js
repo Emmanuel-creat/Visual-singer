@@ -1,5 +1,5 @@
 /**
- * categories.js — Catégories d'événements nocturnes et correspondance avec les classes YAMNet.
+ * categories.js : Catégories d'événements nocturnes et correspondance avec les classes YAMNet.
  *
  * `icon` = nom du glyphe de js/icons.js.
  * Couleurs : palette catégorielle validée pour fond sombre (ordre fixe),

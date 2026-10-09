@@ -1,5 +1,5 @@
 /**
- * charts.js — Petits graphiques Canvas pour l'app Sommeil.
+ * charts.js : Petits graphiques Canvas pour l'app Sommeil.
  *
  * Règles communes : traits de 2 px, barres ≤ 24 px aux extrémités arrondies,
  * grille fine et discrète, texte en couleurs de texte (jamais la couleur de
@@ -101,7 +101,7 @@ class CanvasChart {
     this.tip.style.transform = `translate(${Math.max(0, x)}px, ${y}px)`;
   }
 
-  /** rows = { title, items: [{ value, label, color, line }] } — contenu inséré en textContent. */
+  /** rows = { title, items: [{ value, label, color, line }] } : contenu inséré en textContent. */
   _renderTip({ title, items }) {
     this.tip.hidden = false;
     this.tip.replaceChildren();
@@ -328,7 +328,7 @@ export class TimeChart extends CanvasChart {
       const pt = nearest(s.points, sec, s.tolerance ?? 120);
       const q = pt && s.quality ? s.quality(pt[1]) : null;
       return {
-        value: pt ? (s.fmt || d.yFmt || String)(pt[1]) : '—',
+        value: pt ? (s.fmt || d.yFmt || String)(pt[1]) : '-',
         label: `${s.name}${q != null ? ` · ${qLabel(q)}` : ''}`,
         color: pt && s.quality ? qColor(q) : s.color, line: true,
       };
@@ -658,8 +658,8 @@ export class LaneChart extends CanvasChart {
     return {
       title,
       items: [
-        { value: st == null ? '—' : st ? 'Sommeil' : 'Éveil', label: 'état estimé', color: st == null ? 'transparent' : qColor(st ? 1 : 0) },
-        { value: d.level?.[Math.floor(sec)] != null ? `${d.level[Math.floor(sec)]} dB` : '—', label: 'niveau sonore', color: 'rgba(228,228,231,0.5)', line: true },
+        { value: st == null ? '-' : st ? 'Sommeil' : 'Éveil', label: 'état estimé', color: st == null ? 'transparent' : qColor(st ? 1 : 0) },
+        { value: d.level?.[Math.floor(sec)] != null ? `${d.level[Math.floor(sec)]} dB` : '-', label: 'niveau sonore', color: 'rgba(228,228,231,0.5)', line: true },
       ],
     };
   }

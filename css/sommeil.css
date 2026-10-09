@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Visual Singer — Sommeil
+   Visual Singer - Sommeil
    Reprend les variables et composants de style.css (néomorphisme sombre).
    ========================================================================== */
 
@@ -280,7 +280,7 @@
 .tbl button.play .gi { width: 1rem; height: 1rem; }
 
 /* ======================================================================
-   Graphiques du rapport — style « Elements » + échelle qualité (vert → rouge)
+   Graphiques du rapport, style « Elements » + échelle qualité (vert → rouge)
    ====================================================================== */
 .chart-box {
   background: radial-gradient(120% 90% at 50% 0%, #1d1e23 0%, #17181b 60%, #141518 100%);

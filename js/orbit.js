@@ -1,5 +1,5 @@
 /**
- * orbit.js — Caméra orbitale amortie (rotation, zoom, déplacement, vues prédéfinies).
+ * orbit.js : Caméra orbitale amortie (rotation, zoom, déplacement, vues prédéfinies).
  *
  * Coordonnées sphériques autour d'une cible :
  *   theta = azimut (0 → caméra sur +Z, π/2 → caméra sur +X)

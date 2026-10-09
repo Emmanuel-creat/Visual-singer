@@ -1,5 +1,5 @@
 /**
- * audio.js — Capture microphone + analyse FFT temps réel (Web Audio API).
+ * audio.js : Capture microphone + analyse FFT temps réel (Web Audio API).
  *
  * Chaîne audio :
  *   [Micro | Synthé démo] → Gain(entrée) ─┬→ AnalyserNode → Gain(0) → destination

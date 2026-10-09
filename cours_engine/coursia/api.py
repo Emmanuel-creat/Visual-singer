@@ -1,4 +1,4 @@
-"""API HTTP locale (FastAPI) — écoute uniquement sur 127.0.0.1.
+"""API HTTP locale (FastAPI) : écoute uniquement sur 127.0.0.1.
 
 Sert aussi les pages de Visual Singer : http://127.0.0.1:8091/cours.html
 """
@@ -24,7 +24,7 @@ from .steps.analyze import fmt
 from .steps.documents import soffice
 from .store import Project, create_project, delete_project, file_fingerprint, list_projects
 
-app = FastAPI(title="Visual Singer — Cours", version=__version__)
+app = FastAPI(title="Visual Singer - Cours", version=__version__)
 app.add_middleware(GZipMiddleware, minimum_size=2048)
 app.add_middleware(CORSMiddleware, allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?", allow_methods=["*"], allow_headers=["*"])
 
@@ -349,7 +349,7 @@ async def chat(pid: str, req: Request):
             label = f"Transcription {fmt(h['start'])}–{fmt(h['end'])}" + (f" ({h['speaker']})" if h.get("speaker") else "")
         else:
             kind = {"slide": "Diapositive", "page": "Page"}.get(h.get("unit_kind"), "Section")
-            label = f"{kind} {h['n']} — {h.get('title', '')[:60]} ({h.get('doc_name', '')})"
+            label = f"{kind} {h['n']} : {h.get('title', '')[:60]} ({h.get('doc_name', '')})"
         sources.append({"tag": tag, "label": label, **{k: h.get(k) for k in ("kind", "start", "end", "unit", "n", "doc", "image", "para", "title")}})
         blocks.append(f"[{tag}] {label}\n{h['text'][:1600]}")
     a = p.result("analyze") or {}

@@ -1,5 +1,5 @@
 /**
- * app.js — Point d'entrée : instancie les modules et pilote la boucle d'animation.
+ * app.js : Point d'entrée : instancie les modules et pilote la boucle d'animation.
  *
  *   AudioEngine ──frame──▶ AudioHistory ──▶ Visualizer (3D)
  *        │                     │        └─▶ Timeline (2D)
@@ -121,7 +121,7 @@ async function boot() {
   setInterval(() => {
     const d = identify.currentSource();
     const c = d && CATEGORIES[d.category];
-    const txt = d ? d.label : recognizer.running ? '…' : '—';
+    const txt = d ? d.label : recognizer.running ? '…' : '-';
     if (hudSrc.dataset.txt !== txt) {
       hudSrc.dataset.txt = txt;
       hudSrc.innerHTML = d ? `${icon(c.icon, c.color)} ` : '';

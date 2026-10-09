@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sommeil — Visual Singer</title>
+  <title>Sommeil - Visual Singer</title>
   <meta name="description" content="Surveillance acoustique du sommeil, 100 % locale.">
   <meta name="theme-color" content="#2a2b2f">
   <link rel="icon" type="image/png" href="assets/icons/sommeil.png">
@@ -18,7 +18,7 @@
 
   <!-- ============================ BARRE SUPÉRIEURE ============================ -->
   <header class="s-top">
-    <a class="shell-brand brand" href="index.html" aria-label="Visual Singer — accueil">
+    <a class="shell-brand brand" href="index.html" aria-label="Visual Singer - accueil">
       <span class="brand-mark moon" aria-hidden="true" data-icon="sleep" data-icon-color="#3987e5"></span>
       <span class="brand-text"><b>Visual Singer</b><span>Surveillance du sommeil</span></span>
     </a>
@@ -46,7 +46,7 @@
       </div>
       <label class="night-pick">
         <span>Nuit analysée</span>
-        <select id="nightSelect" aria-describedby="nightHint"><option value="">—</option></select>
+        <select id="nightSelect" aria-describedby="nightHint"><option value="">-</option></select>
         <span id="nightHint" class="sr-only">Nuit affichée dans les onglets Résumé, Chronologie, Ronflements, Événements et Environnement</span>
       </label>
     </div>
@@ -66,14 +66,14 @@
           </button>
           <div class="live-clock">
             <div><span>Durée</span><b id="liveElapsed">00:00:00</b></div>
-            <div><span>Début</span><b id="liveStart">—</b></div>
-            <div><span>État estimé</span><b id="liveState">—</b></div>
+            <div><span>Début</span><b id="liveStart">-</b></div>
+            <div><span>État estimé</span><b id="liveState">-</b></div>
           </div>
           <div class="live-level">
-            <div class="ll-head"><span>Niveau sonore</span><b id="liveLevel">— dB</b><small id="liveFloor">fond — dB</small></div>
+            <div class="ll-head"><span>Niveau sonore</span><b id="liveLevel">- dB</b><small id="liveFloor">fond - dB</small></div>
             <div class="meter big"><div class="meter-fill" id="liveMeter"></div><div class="meter-peak" id="liveFloorMark"></div></div>
           </div>
-          <div class="live-now"><span>Son actuel</span><b id="liveNow">—</b></div>
+          <div class="live-now"><span>Son actuel</span><b id="liveNow">-</b></div>
           <div class="live-actions">
             <button class="btn" id="btnNightMode" title="Écran noir, horloge discrète"><i data-icon="sleep" data-tile="0"></i> Mode nuit</button>
             <label class="field compact">Extraits par type
@@ -90,7 +90,7 @@
         </div>
 
         <div class="s-card live-chart">
-          <h2>Niveau sonore — 30 dernières minutes</h2>
+          <h2>Niveau sonore (30 dernières minutes)</h2>
           <div class="chart-box" id="liveLevelChart"></div>
         </div>
 
@@ -113,7 +113,7 @@
         <div class="sum-head s-card">
           <div class="hero">
             <span>Sommeil estimé</span>
-            <b id="sumHero">—</b>
+            <b id="sumHero">-</b>
             <small id="sumHeroSub"></small>
           </div>
           <div class="tiles" id="sumTiles"></div>
@@ -292,7 +292,7 @@
   <!-- Lecteur des extraits -->
   <div class="player" id="player" hidden>
     <span class="pl-dot" id="plDot"></span>
-    <div class="pl-text"><b id="plTitle">—</b><small id="plSub"></small></div>
+    <div class="pl-text"><b id="plTitle">-</b><small id="plSub"></small></div>
     <audio id="plAudio" controls preload="none"></audio>
     <button class="icon-btn" id="plClose" title="Fermer"><i data-icon="close" data-tile="0"></i></button>
   </div>

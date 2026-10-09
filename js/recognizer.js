@@ -1,5 +1,5 @@
 /**
- * recognizer.js — Identification des sources sonores, 100 % locale (TensorFlow.js).
+ * recognizer.js : Identification des sources sonores, 100 % locale (TensorFlow.js).
  *
  * Deux modèles, chargés à la demande depuis /models :
  *   - YAMNet (Google, Apache 2.0) : 521 types de sons (parole, chant, rire, chien,

@@ -1,5 +1,5 @@
 /**
- * visualizer.js — Moteur 3D : terrain audio, grille, traînées, pics, curseur temporel.
+ * visualizer.js : Moteur 3D : terrain audio, grille, traînées, pics, curseur temporel.
  *
  * Repère de la scène (unités Three.js) :
  *   X (gauche → droite)  = TEMPS        : -W/2 = début de la fenêtre, +W/2 = fin (direct)

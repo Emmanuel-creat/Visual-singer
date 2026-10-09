@@ -16,7 +16,7 @@ from coursia.config import DATA_DIR, HOST, PORT  # noqa: E402  (fixe aussi les d
 if __name__ == "__main__":
     import uvicorn
     url = f"http://{HOST}:{PORT}/cours.html"
-    print(f"Visual Singer — Cours  ->  {url}")
+    print(f"Visual Singer - Cours  ->  {url}")
     print(f"Données               ->  {DATA_DIR}")
     if "--no-browser" not in sys.argv:
         # app.py lance aussi le serveur des pages (port 8080, sauvegardes Bureau) :

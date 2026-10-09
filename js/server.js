@@ -1,5 +1,5 @@
 /**
- * server.js — Connexion (optionnelle) au logiciel serveur.
+ * server.js : Connexion (optionnelle) au logiciel serveur.
  *
  * Totalement indépendant de l'audio : la visualisation fonctionne sans serveur.
  *
@@ -63,7 +63,7 @@ class SimulatedProvider {
       s.uptime += 2;
       emit(normalizeStatus({
         name: 'Serveur local', status: 'online', version: 'v1.0 (simulation)',
-        motd: 'Simulation — connectez votre serveur dans Paramètres',
+        motd: 'Simulation : connectez votre serveur dans Paramètres',
         players: { online: s.players, max: 50, list: names.slice(0, Math.min(names.length, s.players)) },
         tps: s.tps, mspt: (50 / 20) * (40 - s.tps) * 0.9, cpu: s.cpu, ram: { used: s.ram, max: 8 }, uptime: s.uptime,
       }));
@@ -88,7 +88,7 @@ class WebSocketProvider {
       };
       this.ws.onclose = () => {
         if (this.stopped) return;
-        status('error', `Connexion perdue — nouvel essai dans ${Math.round(retry / 1000)} s`);
+        status('error', `Connexion perdue, nouvel essai dans ${Math.round(retry / 1000)} s`);
         this.timer = setTimeout(open, retry);
         retry = Math.min(retry * 2, 15000);
       };

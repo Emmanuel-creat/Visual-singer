@@ -1,5 +1,5 @@
 /**
- * home.js — Page d'accueil : état des services locaux (serveur des pages, moteur Cours, Ollama).
+ * home.js : Page d'accueil : état des services locaux (serveur des pages, moteur Cours, Ollama).
  */
 import { initShell, ENGINE } from './shell.js';
 import { hydrateIcons } from './icons.js';
@@ -25,7 +25,7 @@ async function status() {
   const st = $('#stCours');
   if (sys) {
     const hw = sys.hardware;
-    $('#engineInfo').textContent = `En ligne — ${hw.gpu || 'CPU'}${hw.gpu ? ` (${hw.vram_gb} Go)` : ''}, ${hw.ram_gb} Go de RAM ; LLM ${sys.llm.running ? (sys.llm.quality_ready ? sys.llm.quality : sys.llm.models[0] || '—') : 'arrêté'}.`;
+    $('#engineInfo').textContent = `En ligne : ${hw.gpu || 'CPU'}${hw.gpu ? ` (${hw.vram_gb} Go)` : ''}, ${hw.ram_gb} Go de RAM ; LLM ${sys.llm.running ? (sys.llm.quality_ready ? sys.llm.quality : sys.llm.models[0] || '-') : 'arrêté'}.`;
     st.className = 'app-status ok';
     st.textContent = sys.runner?.current ? 'Analyse en cours' : 'Moteur prêt';
     if (location.port !== '8091') $('#openCours').href = `${ENGINE}/cours.html`;

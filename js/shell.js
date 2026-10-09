@@ -1,5 +1,5 @@
 /**
- * shell.js — Comportements communs aux trois applications :
+ * shell.js : Comportements communs aux trois applications :
  *   - dialogues accessibles (remplacent alert / confirm / prompt) ;
  *   - notifications annoncées aux lecteurs d'écran, avec action « Annuler » ;
  *   - onglets accessibles (flèches du clavier) synchronisés avec l'URL (bouton Retour) ;
@@ -244,7 +244,7 @@ export async function quitSoftware({ beforeQuit } = {}) {
     title: 'Quitter Visual Singer ?',
     message: 'Les serveurs locaux s’arrêtent et la mémoire (RAM et GPU) est libérée. Vos cours, nuits, réglages et détections sont déjà enregistrés sur le Bureau.',
     extra: `${busy ? '<p><strong>Une analyse de cours est en cours.</strong> Elle reprendra automatiquement au prochain lancement de Cours.</p>' : ''}
-      <label class="check"><input type="checkbox" name="ollama" checked> Arrêter aussi Ollama (modèles de langage) — libère la mémoire du GPU</label>`,
+      <label class="check"><input type="checkbox" name="ollama" checked> Arrêter aussi Ollama (modèles de langage), libère la mémoire du GPU</label>`,
     confirmLabel: 'Quitter le logiciel',
     danger: true,
   });
@@ -265,7 +265,7 @@ export async function quitSoftware({ beforeQuit } = {}) {
         <p>Pour relancer : raccourcis « Visual Singer » du Bureau.</p>
       </div>
     </main>`;
-  document.title = 'Visual Singer — fermé';
+  document.title = 'Visual Singer - fermé';
   setTimeout(() => window.close(), 400);   // ne fonctionne que si l'onglet a été ouvert par le logiciel
 }
 
@@ -316,7 +316,7 @@ const APP_PAGES = ['index.html', 'detecteur.html', 'sommeil.html', 'cours.html']
 
 /**
  * Page servie par le moteur Cours (port 8091) : les autres applications ont besoin du
- * serveur des pages (port 8080, sauvegardes Bureau) — liens réécrits s'il répond.
+ * serveur des pages (port 8080, sauvegardes Bureau), liens réécrits s'il répond.
  */
 async function linkAcrossServers() {
   if (location.port !== '8091') return;

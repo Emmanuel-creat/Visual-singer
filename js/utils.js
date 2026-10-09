@@ -1,5 +1,5 @@
 /**
- * utils.js — Petits outils partagés (événements, maths, formatage, stockage sûr).
+ * utils.js : Petits outils partagés (événements, maths, formatage, stockage sûr).
  */
 
 /** Émetteur d'événements minimaliste (on / off / emit). */
@@ -45,7 +45,7 @@ export function formatOffset(sec) {
 
 /** 1240 → "1.24 kHz" ; 86 → "86 Hz". */
 export function formatFreq(hz, compact = false) {
-  if (!hz || !Number.isFinite(hz)) return '—';
+  if (!hz || !Number.isFinite(hz)) return '-';
   if (hz >= 1000) {
     const k = hz / 1000;
     return `${k >= 10 ? k.toFixed(1) : k.toFixed(2)}${compact ? 'k' : ' kHz'}`;
@@ -56,7 +56,7 @@ export function formatFreq(hz, compact = false) {
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 /** Nom de note musicale le plus proche (A4 = 440 Hz) + écart en cents. */
 export function noteName(hz) {
-  if (!hz || hz < 16) return { name: '—', cents: 0 };
+  if (!hz || hz < 16) return { name: '-', cents: 0 };
   const midi = 69 + 12 * Math.log2(hz / 440);
   const n = Math.round(midi);
   return { name: `${NOTE_NAMES[((n % 12) + 12) % 12]}${Math.floor(n / 12) - 1}`, cents: Math.round((midi - n) * 100) };

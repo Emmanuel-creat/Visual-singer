@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Visual Singer — couche d'ergonomie commune (chargée en dernier sur toutes les pages)
+   Visual Singer - couche d'ergonomie commune (chargée en dernier sur toutes les pages)
 
    Principes : texte courant 16 px (interligne 1,6), rien sous 12 px ; contraste
    WCAG AA ; espacements multiples de 8 px ; une action principale par zone ;
@@ -201,7 +201,7 @@ details.method ul { padding-left: 1.2rem; margin: var(--sp-1) 0; }
 .topbar .shell-actions { margin-left: var(--sp-1); }
 .transport .primary:hover:not(:disabled) { color: var(--on-accent); }
 
-/* Détecteur : barre du haut dense — on replie progressivement */
+/* Détecteur : barre du haut dense, on replie progressivement */
 @media (max-width: 1280px) {
   .topbar .app-switch .nav-lbl, .topbar .btn-quit .nav-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .topbar .app-switch a { padding: 0 var(--sp-2); }

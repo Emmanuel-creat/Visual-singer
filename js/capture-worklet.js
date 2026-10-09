@@ -1,5 +1,5 @@
 /**
- * capture-worklet.js — AudioWorklet qui transmet le signal brut au thread principal.
+ * capture-worklet.js : AudioWorklet qui transmet le signal brut au thread principal.
  *
  * Le son est regroupé par blocs de 4096 échantillons (≈ 85 ms à 48 kHz)
  * pour limiter le nombre de messages. Il n'est jamais renvoyé vers les

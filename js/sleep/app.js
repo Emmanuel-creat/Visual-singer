@@ -1,5 +1,5 @@
 /**
- * app.js — Application « Sommeil » : enregistrement de la nuit, onglets d'analyse, historique.
+ * app.js : Application « Sommeil » : enregistrement de la nuit, onglets d'analyse, historique.
  *
  *   SleepMonitor (monitor.js) ─▶ nuit en cours (données brutes + événements)
  *   analysis.js               ─▶ résumé, interprétations, comparaisons
@@ -24,7 +24,7 @@ const $$ = (s) => [...document.querySelectorAll(s)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad = (n) => String(n).padStart(2, '0');
 const hms = (sec) => `${pad(Math.floor(sec / 3600))}:${pad(Math.floor((sec % 3600) / 60))}:${pad(Math.floor(sec % 60))}`;
-const pct = (x) => (x == null ? '—' : `${Math.round(x * 100)} %`);
+const pct = (x) => (x == null ? '-' : `${Math.round(x * 100)} %`);
 const dateLabel = (ms) => new Date(ms).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
 const LANE_LABEL = {
   snore: 'Ronflement', pause: 'Pause respiratoire', cough: 'Toux', sneeze: 'Éternuement', speech: 'Paroles',
@@ -309,7 +309,7 @@ function refreshLive() {
   if (!n) return;
   liveSummary = summarize(n);
   const st = liveSummary.states;
-  $('#liveState').textContent = st.length ? (st[st.length - 1] ? 'Sommeil' : 'Éveil') : '—';
+  $('#liveState').textContent = st.length ? (st[st.length - 1] ? 'Sommeil' : 'Éveil') : '-';
   if (tab === 'live') renderLive();
   else if (currentId === '__live__') renderTab();
 }
@@ -353,8 +353,8 @@ function renderSummary() {
   $('#sumHeroSub').textContent = `${dateLabel(s.start)} · ${clockAt(s.start, 0)} → ${clockAt(s.start, s.recMin * 60)} · ${fmtDur(s.recMin)} d'enregistrement${n.demo ? ' · démonstration' : ''}`;
   const m = (k) => METRICS.find((x) => x.key === k);
   $('#sumTiles').innerHTML = [
-    tile('Endormissement', s.onsetClock || '—', s.latencyMin != null ? `après ${fmtDur(s.latencyMin)}` : '', METRIC_Q.latency(s.latencyMin)),
-    tile('Réveil final', s.wakeClock || '—'),
+    tile('Endormissement', s.onsetClock || '-', s.latencyMin != null ? `après ${fmtDur(s.latencyMin)}` : '', METRIC_Q.latency(s.latencyMin)),
+    tile('Réveil final', s.wakeClock || '-'),
     tile('Efficacité', pct(s.efficiency), avgSub('efficiency', m('efficiency').fmt, s), METRIC_Q.efficiency(s.efficiency)),
     tile('Réveils nocturnes', String(s.awakenings.length), `${fmtDur(s.wasoMin)} d'éveil`, METRIC_Q.awak(s.awakenings.length)),
     tile('Ronflement', pct(s.snore.pctSleep), `${num(s.snore.count)} ronflements`, METRIC_Q.snorePct(s.snore.pctSleep)),
@@ -362,7 +362,7 @@ function renderSummary() {
     tile('Toux', num(s.byCat.cough.occurrences), `${s.byCat.cough.episodes} épisodes`, METRIC_Q.cough(s.byCat.cough.occurrences)),
     tile('Mouvements', num(s.movement.perHour, 1) + ' / h', `${s.movement.episodes} au total`, METRIC_Q.move(s.movement.perHour)),
     tile('Paroles / vocal.', `${s.byCat.speech.episodes} / ${s.byCat.vocal.episodes}`, '', METRIC_Q.speech(s.byCat.speech.episodes + s.byCat.vocal.episodes)),
-    tile('Niveau médian', s.ambient.l50 != null ? `${s.ambient.l50} dB` : '—', `${s.byCat.env.episodes} bruits extérieurs`, METRIC_Q.l50(s.ambient.l50)),
+    tile('Niveau médian', s.ambient.l50 != null ? `${s.ambient.l50} dB` : '-', `${s.byCat.env.episodes} bruits extérieurs`, METRIC_Q.l50(s.ambient.l50)),
   ].join('');
 
   renderRings(s);
@@ -410,7 +410,7 @@ function renderRings(s) {
     { value: s.efficiency, q: METRIC_Q.efficiency(s.efficiency), center: pct(s.efficiency), label: 'efficacité', sub: `${fmtDur(s.wasoMin)} d'éveil` },
     { value: s.snore.pctSleep, q: METRIC_Q.snorePct(s.snore.pctSleep), center: pct(s.snore.pctSleep), label: 'ronflement', sub: `${num(s.snore.count)} ronflements` },
     { value: Math.min(1, s.pauses.perHour / 15), q: METRIC_Q.pauses(s.pauses.perHour), center: num(s.pauses.perHour, 1), label: 'pauses / h', sub: `max ${s.pauses.maxDur || 0} s` },
-    { value: s.breathing.regularity ?? 0, q: s.breathing.regularity != null ? METRIC_Q.reg(s.breathing.regularity) : null, center: s.breathing.regularity != null ? num(s.breathing.regularity, 2) : '—', label: 'régularité resp.', sub: s.breathing.rate ? `${num(s.breathing.rate, 1)} resp./min` : 'peu audible' },
+    { value: s.breathing.regularity ?? 0, q: s.breathing.regularity != null ? METRIC_Q.reg(s.breathing.regularity) : null, center: s.breathing.regularity != null ? num(s.breathing.regularity, 2) : '-', label: 'régularité resp.', sub: s.breathing.rate ? `${num(s.breathing.rate, 1)} resp./min` : 'peu audible' },
     { value: Math.min(1, s.movement.perHour / 25), q: METRIC_Q.move(s.movement.perHour), center: num(s.movement.perHour, 1), label: 'mouvements / h', sub: `${s.movement.restlessMin} min agitées` },
   ];
   if (box.children.length !== defs.length) box.innerHTML = defs.map(() => '<div class="ring-card"></div>').join('');
@@ -469,11 +469,11 @@ function renderBreath() {
   $('#brTiles').innerHTML = [
     tile('Temps de ronflement', pct(s.snore.pctSleep), fmtDur(s.snore.seconds / 60) + ' cumulées', METRIC_Q.snorePct(s.snore.pctSleep)),
     tile('Ronflements', num(s.snore.count), `${s.snore.episodes} épisodes`, METRIC_Q.snoreCount(s.snore.count)),
-    tile('Intensité moyenne', s.snore.meanDb != null ? `${s.snore.meanDb} dB` : '—', s.snore.maxDb != null ? `max ${s.snore.maxDb} dB` : ''),
+    tile('Intensité moyenne', s.snore.meanDb != null ? `${s.snore.meanDb} dB` : '-', s.snore.maxDb != null ? `max ${s.snore.maxDb} dB` : ''),
     tile('Pauses suspectes', num(s.pauses.count), `${num(s.pauses.perHour, 1)} par heure de sommeil`, METRIC_Q.pauses(s.pauses.perHour)),
-    tile('Pause la plus longue', s.pauses.count ? `${s.pauses.maxDur} s` : '—', s.pauses.count ? `moyenne ${Math.round(s.pauses.meanDur)} s` : ''),
-    tile('Rythme respiratoire', s.breathing.rate ? `${num(s.breathing.rate, 1)} /min` : '—', s.breathing.rate ? `mesuré sur ${pct(s.breathing.coverage)} du sommeil` : 'respiration peu audible', s.breathing.rate ? METRIC_Q.rate(s.breathing.rate) : null),
-    tile('Régularité', s.breathing.regularity != null ? num(s.breathing.regularity, 2) : '—', s.breathing.irregularPct != null ? `${pct(s.breathing.irregularPct)} de minutes irrégulières` : '', s.breathing.regularity != null ? METRIC_Q.reg(s.breathing.regularity) : null),
+    tile('Pause la plus longue', s.pauses.count ? `${s.pauses.maxDur} s` : '-', s.pauses.count ? `moyenne ${Math.round(s.pauses.meanDur)} s` : ''),
+    tile('Rythme respiratoire', s.breathing.rate ? `${num(s.breathing.rate, 1)} /min` : '-', s.breathing.rate ? `mesuré sur ${pct(s.breathing.coverage)} du sommeil` : 'respiration peu audible', s.breathing.rate ? METRIC_Q.rate(s.breathing.rate) : null),
+    tile('Régularité', s.breathing.regularity != null ? num(s.breathing.regularity, 2) : '-', s.breathing.irregularPct != null ? `${pct(s.breathing.irregularPct)} de minutes irrégulières` : '', s.breathing.regularity != null ? METRIC_Q.reg(s.breathing.regularity) : null),
   ].join('');
   const end = n.start + n.lv.length * 1000;
   charts.brSnore ??= new TimeChart($('#brSnore'));
@@ -499,8 +499,8 @@ function renderBreath() {
 
   const t = $('#brPauses');
   t.innerHTML = `<thead><tr><th>Heure</th><th class="num">Durée</th><th>Reprise</th><th class="num">Niveau à la reprise</th><th>Extrait</th></tr></thead><tbody>${
-    n.pauses.length ? n.pauses.map((p, i) => `<tr><td>${clockAt(n.start, p.t0)}</td><td class="num">${p.dur} s</td><td>${esc(p.resume)}</td><td class="num">${p.db ?? '—'} dB</td>
-      <td>${p.clip ? `<button class="play" data-pause="${i}">${playIco} Écouter</button>` : '<span class="muted">—</span>'}</td></tr>`).join('')
+    n.pauses.length ? n.pauses.map((p, i) => `<tr><td>${clockAt(n.start, p.t0)}</td><td class="num">${p.dur} s</td><td>${esc(p.resume)}</td><td class="num">${p.db ?? '-'} dB</td>
+      <td>${p.clip ? `<button class="play" data-pause="${i}">${playIco} Écouter</button>` : '<span class="muted">-</span>'}</td></tr>`).join('')
       : '<tr><td colspan="5" class="muted">Aucune pause respiratoire suspecte.</td></tr>'}</tbody>`;
   t.onclick = (e) => {
     const b = e.target.closest('[data-pause]');
@@ -526,8 +526,8 @@ function renderEvents() {
       <td><span class="cat" style="--cat:${CATS[e.cat].color}"><i></i>${esc(LANE_LABEL[e.cat])}</span></td>
       <td>${esc(e.label || e.resume || '')}</td>
       <td class="num">${Math.max(1, Math.round(e.t1 - e.t0))} s</td><td class="num">${e.n ?? 1}</td>
-      <td class="num">${e.db != null ? `${e.db} dB` : '—'}</td><td class="num">${e.peak ? pct(e.peak) : '—'}</td>
-      <td>${e.clip ? `<button class="play" data-i="${i}">${playIco} Écouter</button>` : '<span class="muted">—</span>'}</td></tr>`).join('')
+      <td class="num">${e.db != null ? `${e.db} dB` : '-'}</td><td class="num">${e.peak ? pct(e.peak) : '-'}</td>
+      <td>${e.clip ? `<button class="play" data-i="${i}">${playIco} Écouter</button>` : '<span class="muted">-</span>'}</td></tr>`).join('')
     || '<tr><td colspan="8" class="muted">Aucun événement.</td></tr>'}</tbody>`;
   $('#btnEvCsv').onclick = () => downloadCsv(`sommeil_evenements_${new Date(n.start).toISOString().slice(0, 10)}${evFilter === 'all' ? '' : `_${evFilter}`}.csv`,
     ['heure', 'type', 'detail', 'duree_s', 'occurrences', 'niveau_max_db', 'confiance'],
@@ -557,10 +557,10 @@ function downloadCsv(name, head, rows) {
 function renderEnv() {
   const n = shownNight(), s = shownSummary();
   $('#envTiles').innerHTML = [
-    tile('Bruit de fond (L90)', s.ambient.l90 != null ? `${s.ambient.l90} dB` : '—', 'niveau dépassé 90 % du temps'),
-    tile('Niveau médian (L50)', s.ambient.l50 != null ? `${s.ambient.l50} dB` : '—', '', METRIC_Q.l50(s.ambient.l50)),
-    tile('Pics fréquents (L10)', s.ambient.l10 != null ? `${s.ambient.l10} dB` : '—', 'dépassé 10 % du temps'),
-    tile('Maximum', s.ambient.max != null ? `${s.ambient.max} dB` : '—'),
+    tile('Bruit de fond (L90)', s.ambient.l90 != null ? `${s.ambient.l90} dB` : '-', 'niveau dépassé 90 % du temps'),
+    tile('Niveau médian (L50)', s.ambient.l50 != null ? `${s.ambient.l50} dB` : '-', '', METRIC_Q.l50(s.ambient.l50)),
+    tile('Pics fréquents (L10)', s.ambient.l10 != null ? `${s.ambient.l10} dB` : '-', 'dépassé 10 % du temps'),
+    tile('Maximum', s.ambient.max != null ? `${s.ambient.max} dB` : '-'),
     tile('Bruits environnants', num(s.byCat.env.episodes), fmtDur(s.byCat.env.seconds / 60) + ' cumulées', METRIC_Q.env(s.byCat.env.episodes)),
     tile('Suivis d’un réveil', num(s.disturbing.length), s.disturbing.length ? s.disturbing.slice(0, 2).map((d) => `${d.label} ${clockAt(s.start, d.t0)}`).join(', ') : 'aucun'),
   ].join('');
@@ -584,7 +584,7 @@ function renderEnv() {
   const t = $('#envLoud');
   t.innerHTML = `<thead><tr><th>Heure</th><th>Type</th><th class="num">Niveau</th><th>Extrait</th></tr></thead><tbody>${
     loud.map((e, i) => `<tr><td>${clockAt(n.start, e.t0)}</td><td><span class="cat" style="--cat:${CATS[e.cat].color}"><i></i>${esc(e.label || LANE_LABEL[e.cat])}</span></td>
-      <td class="num">${e.db} dB</td><td>${e.clip ? `<button class="play" data-i="${i}">${playIco}</button>` : '<span class="muted">—</span>'}</td></tr>`).join('')
+      <td class="num">${e.db} dB</td><td>${e.clip ? `<button class="play" data-i="${i}">${playIco}</button>` : '<span class="muted">-</span>'}</td></tr>`).join('')
     || '<tr><td colspan="4" class="muted">Aucun bruit environnant.</td></tr>'}</tbody>`;
   t.onclick = (ev) => {
     const b = ev.target.closest('[data-i]');
@@ -604,7 +604,7 @@ function renderHistory() {
     [...list].reverse().map((s) => `<tr class="${s.id === currentId ? 'sel' : ''}">
       <td><span class="linkish" data-open="${esc(s.id)}">${esc(dateLabel(s.start))} · ${clockAt(s.start, 0)}</span>${s.demo ? '<span class="demo-tag">démo</span>' : ''}</td>
       <td class="num">${fmtDur(s.recMin)}</td><td class="num">${fmtDur(s.sleepMin)}</td><td class="num">${pct(s.efficiency)}</td>
-      <td>${s.onsetClock || '—'}</td><td>${s.wakeClock || '—'}</td>
+      <td>${s.onsetClock || '-'}</td><td>${s.wakeClock || '-'}</td>
       <td class="num">${pct(s.snore.pctSleep)}</td><td class="num">${num(s.pauses.perHour, 1)}</td><td class="num">${num(s.byCat.cough.occurrences)}</td>
       <td class="num">${num(s.movement.perHour, 1)}</td><td class="num">${num(s.byCat.env.episodes)}</td>
       <td>${s.demo ? '' : `<button class="play" data-del="${esc(s.id)}" title="Déplacer dans la corbeille (sommeil/_corbeille)">${icon('trash', '#e66767', { tile: false })}</button>`}</td></tr>`).join('')
@@ -652,11 +652,11 @@ function renderTrend() {
   charts.trend.setData({
     quality: mq ? (v) => mq(unconv(v)) : null, color: '#3987e5', name: m.label, fmt: axisFmt, highlight: false,
     bars: list.map((s) => ({ label: new Date(s.start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' }), value: conv(m.get(s) ?? 0), tipTitle: dateLabel(s.start),
-      tip: [{ value: m.get(s) == null ? '—' : m.fmt(m.get(s)), label: `${m.label}${mq && m.get(s) != null ? ` · ${qLabel(mq(m.get(s)))}` : ''}`, color: mq && m.get(s) != null ? qColor(mq(m.get(s))) : '#3987e5' }] })),
+      tip: [{ value: m.get(s) == null ? '-' : m.fmt(m.get(s)), label: `${m.label}${mq && m.get(s) != null ? ` · ${qLabel(mq(m.get(s)))}` : ''}`, color: mq && m.get(s) != null ? qColor(mq(m.get(s))) : '#3987e5' }] })),
   });
   calendarHeat($('#calendar'), {
     selected: currentId,
-    items: list.map((s) => ({ id: s.id, start: s.start, q: mq && m.get(s) != null ? mq(m.get(s)) : null, text: `${dateLabel(s.start)} · ${m.label} : ${m.get(s) == null ? '—' : m.fmt(m.get(s))}` })),
+    items: list.map((s) => ({ id: s.id, start: s.start, q: mq && m.get(s) != null ? mq(m.get(s)) : null, text: `${dateLabel(s.start)} · ${m.label} : ${m.get(s) == null ? '-' : m.fmt(m.get(s))}` })),
     onPick: async (id) => { await selectNight(id); showTab('summary'); },
   });
   $('#calendarHint').textContent = `Couleur : ${m.label.toLowerCase()}. Cliquer sur une nuit pour l'ouvrir.`;
@@ -670,13 +670,13 @@ function renderCompare() {
   t.innerHTML = `<thead><tr><th>Indicateur</th><th class="num">${esc(dateLabel(a.start))}</th><th class="num">${esc(dateLabel(b.start))}</th><th class="num">Écart</th></tr></thead><tbody>${
     METRICS.map((m) => {
       const va = m.get(a), vb = m.get(b);
-      let diff = '—', cls = '';
+      let diff = '-', cls = '';
       if (va != null && vb != null) {
         const d = va - vb;
         diff = d === 0 ? '=' : `${d > 0 ? '+' : '−'}${m.fmt(Math.abs(d))}`;
         if (m.better && d !== 0) cls = (d > 0) === (m.better > 0) ? 'better' : 'worse';
       }
-      return `<tr><td>${esc(m.label)}</td><td class="num">${va == null ? '—' : esc(m.fmt(va))}</td><td class="num">${vb == null ? '—' : esc(m.fmt(vb))}</td><td class="num ${cls}">${esc(diff)}</td></tr>`;
+      return `<tr><td>${esc(m.label)}</td><td class="num">${va == null ? '-' : esc(m.fmt(va))}</td><td class="num">${vb == null ? '-' : esc(m.fmt(vb))}</td><td class="num ${cls}">${esc(diff)}</td></tr>`;
     }).join('')}</tbody>`;
 }
 

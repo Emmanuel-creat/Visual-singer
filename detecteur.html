@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Détecteur — Visual Singer</title>
-  <meta name="description" content="Spectre audio 3D temps réel et identification des sources sonores — 100 % local.">
+  <title>Détecteur - Visual Singer</title>
+  <meta name="description" content="Spectre audio 3D temps réel et identification des sources sonores, 100 % local.">
   <link rel="icon" type="image/png" href="assets/icons/detecteur.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/ux.css">
@@ -20,11 +20,11 @@
     <button class="icon-btn" id="btnSidebar" title="Afficher / masquer le panneau latéral (B)" aria-label="Afficher ou masquer le panneau latéral" aria-controls="sidebar">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12M2 8h12M2 13h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
     </button>
-    <a class="shell-brand brand" href="index.html" aria-label="Visual Singer — accueil">
+    <a class="shell-brand brand" href="index.html" aria-label="Visual Singer - accueil">
       <span class="brand-mark" aria-hidden="true" data-icon="wave"></span>
       <span class="brand-text"><b>Visual Singer</b><span>Détecteur</span></span>
     </a>
-    <h1 class="sr-only">Détecteur acoustique — spectre 3D et identification des sons</h1>
+    <h1 class="sr-only">Détecteur acoustique : spectre 3D et identification des sons</h1>
     <nav class="app-switch" aria-label="Applications">
       <a href="detecteur.html" aria-current="page"><i data-icon="wave" data-tile="0" data-icon-color="#ff4d3d"></i><span class="nav-lbl">Détecteur</span></a>
       <a href="sommeil.html"><i data-icon="sleep" data-tile="0" data-icon-color="#3987e5"></i><span class="nav-lbl">Sommeil</span></a>
@@ -32,17 +32,17 @@
     </nav>
 
     <div class="stat-strip hide-xl" id="serverStrip" aria-label="Supervision serveur">
-      <div class="stat"><label>Serveur</label><b id="tbStatus" data-state="offline">—</b></div>
-      <div class="stat"><label>Clients</label><b id="tbPlayers">— / —</b></div>
-      <div class="stat"><label>Cadence</label><b id="tbTps">— TPS</b></div>
-      <div class="stat hide-sm"><label>CPU</label><b id="tbCpu">—</b></div>
-      <div class="stat hide-sm"><label>RAM</label><b id="tbRam">—</b></div>
+      <div class="stat"><label>Serveur</label><b id="tbStatus" data-state="offline">-</b></div>
+      <div class="stat"><label>Clients</label><b id="tbPlayers">- / -</b></div>
+      <div class="stat"><label>Cadence</label><b id="tbTps">- TPS</b></div>
+      <div class="stat hide-sm"><label>CPU</label><b id="tbCpu">-</b></div>
+      <div class="stat hide-sm"><label>RAM</label><b id="tbRam">-</b></div>
     </div>
 
     <div class="topbar-right">
       <div class="stat-group">
         <div class="stat"><label>Entrée</label><b id="tbAudio" data-state="off">Arrêtée</b></div>
-        <div class="stat hide-sm"><label>Images/s</label><b id="tbFps">—</b></div>
+        <div class="stat hide-sm"><label>Images/s</label><b id="tbFps">-</b></div>
         <div class="stat hide-md"><label>Session</label><b id="tbClock">00:00</b></div>
       </div>
       <button class="btn" data-drawer="settings" title="Paramètres (S)" aria-label="Paramètres">
@@ -86,11 +86,11 @@
           <div class="meter-fill" id="micMeter"></div>
           <div class="meter-peak" id="micPeak"></div>
         </div>
-        <div class="kv"><span>Périphérique</span><b id="micDevice" class="ellipsis">—</b></div>
-        <div class="kv"><span>Échantillonnage</span><b id="micRate">—</b></div>
-        <div class="kv"><span>Taille FFT</span><b id="micFft">—</b></div>
-        <div class="kv"><span>Fréquence dominante</span><b id="micDom">—</b></div>
-        <div class="kv"><span>Niveau RMS</span><b id="micVol">—</b></div>
+        <div class="kv"><span>Périphérique</span><b id="micDevice" class="ellipsis">-</b></div>
+        <div class="kv"><span>Échantillonnage</span><b id="micRate">-</b></div>
+        <div class="kv"><span>Taille FFT</span><b id="micFft">-</b></div>
+        <div class="kv"><span>Fréquence dominante</span><b id="micDom">-</b></div>
+        <div class="kv"><span>Niveau RMS</span><b id="micVol">-</b></div>
         <div class="kv"><span>Saturation</span><b id="micClip" class="ok">Aucune</b></div>
       </section>
 
@@ -100,8 +100,8 @@
         <div class="band-row" data-zone="mid"><span>Médiums</span><div class="bar"><i id="barMid"></i></div><b id="valMid">0%</b></div>
         <div class="band-row" data-zone="treble"><span>Aigus</span><div class="bar"><i id="barTreble"></i></div><b id="valTreble">0%</b></div>
         <div class="band-row" data-zone="intensity"><span>Intensité</span><div class="bar"><i id="barInt"></i></div><b id="valInt">0%</b></div>
-        <div class="kv dominant"><span>Zone dominante</span><b id="domZone">—</b></div>
-        <div class="kv"><span>Plages (Hz)</span><b id="zoneRanges">—</b></div>
+        <div class="kv dominant"><span>Zone dominante</span><b id="domZone">-</b></div>
+        <div class="kv"><span>Plages (Hz)</span><b id="zoneRanges">-</b></div>
       </section>
 
       <section class="panel grow">
@@ -113,11 +113,11 @@
         <ul class="peak-list" id="peakList" data-tab-pane="peaks" hidden><li class="empty">Aucun pic détecté</li></ul>
       </section>
       <section class="panel">
-        <h3><span class="dot" id="srvDot"></span>Serveur supervisé<small id="srvSource">—</small></h3>
-        <div class="kv"><span>Nom</span><b id="srvName">—</b></div>
-        <div class="kv"><span>VERSION</span><b id="srvVersion">—</b></div>
-        <div class="kv"><span>Disponibilité</span><b id="srvUptime">—</b></div>
-        <div class="kv"><span>ms / cycle</span><b id="srvMspt">—</b></div>
+        <h3><span class="dot" id="srvDot"></span>Serveur supervisé<small id="srvSource">-</small></h3>
+        <div class="kv"><span>Nom</span><b id="srvName">-</b></div>
+        <div class="kv"><span>Version</span><b id="srvVersion">-</b></div>
+        <div class="kv"><span>Disponibilité</span><b id="srvUptime">-</b></div>
+        <div class="kv"><span>ms / cycle</span><b id="srvMspt">-</b></div>
         <div class="spark-row">
           <div class="spark"><label>Cycles/s</label><canvas id="sparkTps" role="img" aria-label="Historique des cycles par seconde"></canvas></div>
           <div class="spark"><label>Clients</label><canvas id="sparkPlayers" role="img" aria-label="Historique du nombre de clients"></canvas></div>
@@ -138,10 +138,10 @@
         </div>
         <div class="hud-bar"><i id="hudIntBar"></i></div>
         <div class="hud-row">
-          <span class="k">F. dominante</span><span class="v" id="hudFreq">—</span><span class="u" id="hudNote"></span>
+          <span class="k">F. dominante</span><span class="v" id="hudFreq">-</span><span class="u" id="hudNote"></span>
         </div>
         <div class="hud-row source">
-          <span class="k">Source</span><span class="v" id="hudSrc">—</span><span class="u" id="hudSrcConf"></span>
+          <span class="k">Source</span><span class="v" id="hudSrc">-</span><span class="u" id="hudSrcConf"></span>
         </div>
         <div class="hud-zones">
           <div class="hz" data-zone="bass"><div class="hz-bar"><i id="hzBass"></i></div><span>Graves</span><b id="hzBassV">0</b></div>
@@ -161,8 +161,8 @@
 
       <div class="cam-bar" role="toolbar" aria-label="Caméra">
         <button data-view="TOP" title="Vue de dessus (1)">Dessus</button>
-        <button data-view="FRONT" title="Vue de face — spectre (2)">Face</button>
-        <button data-view="SIDE" title="Vue de côté — axe du temps (3)">Côté</button>
+        <button data-view="FRONT" title="Vue de face, spectre (2)">Face</button>
+        <button data-view="SIDE" title="Vue de côté, axe du temps (3)">Côté</button>
         <button data-view="3D" title="Vue 3D (4)">3D</button>
         <button data-view="RESET" title="Réinitialiser la caméra (R)">Réinitialiser</button>
         <button id="btnAutoRotate" class="toggle" title="Rotation automatique (A)"><i data-icon="refresh" data-tile="0"></i> Rotation</button>
@@ -267,10 +267,10 @@
         <label class="field">Fréquence d'analyse
           <select data-setting="recogInterval"><option value="1">toutes les 1 s</option><option value="1.5">toutes les 1,5 s</option><option value="2">toutes les 2 s</option><option value="3">toutes les 3 s</option></select>
         </label>
-        <label class="field">Confiance min. — sons, animaux, humains <output data-for="soundMinConf"></output>
+        <label class="field">Confiance min. (sons, animaux, humains) <output data-for="soundMinConf"></output>
           <input type="range" min="0.1" max="0.9" step="0.05" data-setting="soundMinConf">
         </label>
-        <label class="field">Confiance min. — espèces d'oiseaux <output data-for="birdMinConf"></output>
+        <label class="field">Confiance min. (espèces d'oiseaux) <output data-for="birdMinConf"></output>
           <input type="range" min="0.1" max="0.95" step="0.05" data-setting="birdMinConf">
         </label>
         <label class="check"><input type="checkbox" data-setting="birdAlways"> Toujours chercher l'espèce d'oiseau</label>
@@ -283,11 +283,11 @@
         <p class="note" id="geoNote"></p>
 
         <h4>Sauvegarde sur le Bureau</h4>
-        <div class="kv"><span>Dossier</span><b id="dataDir" class="ellipsis">—</b></div>
+        <div class="kv"><span>Dossier</span><b id="dataDir" class="ellipsis">-</b></div>
         <label class="check"><input type="checkbox" data-setting="saveDetections"> Journal des détections (CSV + JSON)</label>
         <label class="check"><input type="checkbox" data-setting="saveClips"> Extrait audio (.wav) de chaque détection</label>
         <p class="note" id="storeNote"></p>
-        <p class="note">Modèles locaux : BirdNET v2.4 — K. Lisa Yang Center for Conservation Bioacoustics (Cornell Lab of Ornithology) &amp; TU Chemnitz, licence CC BY-NC-SA 4.0 (usage non commercial) · YAMNet — Google, Apache 2.0.</p>
+        <p class="note">Modèles locaux : BirdNET v2.4 : K. Lisa Yang Center for Conservation Bioacoustics (Cornell Lab of Ornithology) &amp; TU Chemnitz, licence CC BY-NC-SA 4.0 (usage non commercial) · YAMNet, Google, Apache 2.0.</p>
 
         <h4>Visualisation</h4>
         <label class="field">Qualité graphique
@@ -333,8 +333,8 @@
         <label class="field">Résolution (tranches / s)
           <select data-setting="historyRate"><option value="20">20</option><option value="30">30</option><option value="60">60</option></select>
         </label>
-        <div class="kv"><span>Mémoire</span><b id="histMem">—</b></div>
-        <div class="kv"><span>Enregistré</span><b id="histLen">—</b></div>
+        <div class="kv"><span>Mémoire</span><b id="histMem">-</b></div>
+        <div class="kv"><span>Enregistré</span><b id="histLen">-</b></div>
         <button class="btn ghost" id="btnClearHistory">Effacer l'historique</button>
 
         <h4>Caméra</h4>
@@ -382,7 +382,7 @@
   <section class="timeline-bar" aria-label="Chronologie">
     <div class="tl-head">
       <span>Chronologie</span>
-      <span class="tl-range" id="tlRange">—</span>
+      <span class="tl-range" id="tlRange">-</span>
     </div>
     <div class="tl-wrap">
       <canvas id="timeline" class="timeline" role="img" aria-label="Chronologie de l'intensité et des pics ; flèches gauche/droite pour naviguer" title="Cliquer/glisser : naviguer · molette : zoom · Maj+molette : défiler · double-clic : direct"></canvas>

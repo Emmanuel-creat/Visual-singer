@@ -1,5 +1,5 @@
 /**
- * settings.js — Paramètres centralisés, persistés dans localStorage.
+ * settings.js : Paramètres centralisés, persistés dans localStorage.
  *
  * Tous les modules lisent leurs réglages ici et écoutent l'événement "change"
  * ({ key, value }) pour réagir à chaud. Les éléments HTML portant

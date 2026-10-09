@@ -1,5 +1,5 @@
 /**
- * transport.js — État de lecture : direct, pause, lecture (avant/arrière).
+ * transport.js : État de lecture : direct, pause, lecture (avant/arrière).
  *
  * Le curseur temporel (cursor, en secondes de session) est la seule
  * source de vérité pour "l'instant affiché". L'enregistrement continue

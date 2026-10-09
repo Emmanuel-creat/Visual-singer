@@ -1,5 +1,5 @@
 /**
- * app.js — Interface « Cours » : projets, traitement, lecture synchronisée,
+ * app.js : Interface « Cours » : projets, traitement, lecture synchronisée,
  * résumés, notions, croisement audio ↔ support, révision, recherche, chat, export.
  *
  * Le moteur (Python, cours_engine/) écoute sur http://127.0.0.1:8091.
@@ -81,7 +81,7 @@ async function boot() {
   try {
     await loadSystem();
   } catch {
-    $('#sysPill').innerHTML = '<i style="background:#e0384a"></i><b>Moteur arrêté</b> — rouvrez Cours depuis son raccourci';
+    $('#sysPill').innerHTML = '<i style="background:#e0384a"></i><b>Moteur arrêté</b> : rouvrez Cours depuis son raccourci';
     $('#app').classList.add('no-project');
     $('#emptyState p').textContent = "Le moteur d'analyse ne répond pas. Fermez puis rouvrez Cours avec son raccourci du Bureau (il démarre le moteur et Ollama) ; journal : %LOCALAPPDATA%\\Visual Singer\\logs\\cours.log.";
     return;
@@ -102,7 +102,7 @@ async function loadSystem() {
   const llmOk = s.llm.running;
   $('#sysPill').innerHTML = `<b>${esc(hw.gpu ? hw.gpu.replace('NVIDIA GeForce ', '') : 'CPU')}</b>${hw.gpu ? ` ${hw.vram_gb} Go` : ''} · ${hw.ram_gb} Go RAM`
     + `<i style="background:${llmOk ? '#14a88a' : '#e0384a'}"></i>${llmOk ? esc(s.llm.quality_ready ? s.llm.quality : (s.llm.models[0] || 'LLM')) : 'Ollama arrêté'}`;
-  $('#sysPill').title = `${hw.cpu}\n${hw.threads} threads · CUDA ${hw.torch_cuda ? 'oui' : 'non'} (capacité ${hw.compute_capability || '—'})\n`
+  $('#sysPill').title = `${hw.cpu}\n${hw.threads} threads · CUDA ${hw.torch_cuda ? 'oui' : 'non'} (capacité ${hw.compute_capability || '-'})\n`
     + `LLM qualité : ${s.recommend.llm_quality}${s.llm.quality_ready ? '' : ' (non installé)'}\nLLM rapide : ${s.recommend.llm_fast}\nDonnées : ${s.data_dir}`;
 }
 
@@ -129,7 +129,7 @@ function renderProjects() {
 /* ------------------------------------------------------------------- projet */
 
 async function newProject() {
-  const title = await promptDialog({ title: 'Nouveau cours', label: 'Titre du cours', value: '', hint: 'Ex. : Pharmacologie — cours 4, anticoagulants. Modifiable ensuite.', confirmLabel: 'Créer le cours' });
+  const title = await promptDialog({ title: 'Nouveau cours', label: 'Titre du cours', value: '', hint: 'Ex. : Pharmacologie, cours 4, anticoagulants. Modifiable ensuite.', confirmLabel: 'Créer le cours' });
   if (title === null) return;
   const p = await api('/api/projects', jsonOpts('POST', { title }));
   await loadProjects();
@@ -189,7 +189,7 @@ function renderProjectPanel() {
     const st = p.state?.[id] || {};
     const status = st.status || 'pending';
     const pct = Math.round((st.progress || 0) * 100);
-    return `<li class="${status}"><span class="sd"></span><span>${esc(label)}</span><span class="sp">${status === 'done' ? (st.seconds != null ? `${st.seconds < 90 ? Math.round(st.seconds) + ' s' : Math.round(st.seconds / 60) + ' min'}` : '✓') : status === 'running' ? pct + ' %' : status === 'skipped' ? '—' : ''}</span>
+    return `<li class="${status}"><span class="sd"></span><span>${esc(label)}</span><span class="sp">${status === 'done' ? (st.seconds != null ? `${st.seconds < 90 ? Math.round(st.seconds) + ' s' : Math.round(st.seconds / 60) + ' min'}` : '✓') : status === 'running' ? pct + ' %' : status === 'skipped' ? '-' : ''}</span>
       ${status === 'running' ? `<span class="sbar"><i style="width:${pct}%"></i></span>` : ''}${status === 'error' && st.error ? `<span class="serr">${esc(st.error)}</span>` : ''}</li>`;
   }).join('');
   const logs = $('#logs');
@@ -569,7 +569,7 @@ function renderThumbs() {
   const units = S.data.units || [];
   const cov = unitCoverage();
   $('#thumbs').innerHTML = units.map((u) => u.image
-    ? `<button class="thumb${cov[u.id] != null && cov[u.id] < 0.55 ? ' uncov' : ''}" data-u="${u.id}" title="${esc(`${UNIT_LABEL[u.kind] || ''} ${u.n} — ${u.title}`)}"><img loading="lazy" src="${fileUrl(u.image)}" alt=""><span>${u.n}</span></button>`
+    ? `<button class="thumb${cov[u.id] != null && cov[u.id] < 0.55 ? ' uncov' : ''}" data-u="${u.id}" title="${esc(`${UNIT_LABEL[u.kind] || ''} ${u.n} : ${u.title}`)}"><img loading="lazy" src="${fileUrl(u.image)}" alt=""><span>${u.n}</span></button>`
     : `<button class="thumb txt${cov[u.id] != null && cov[u.id] < 0.55 ? ' uncov' : ''}" data-u="${u.id}" title="${esc(u.title)}">${u.n}. ${esc(u.title).slice(0, 60)}</button>`).join('');
   $('#slideHead').textContent = units.length ? `Support (${units.length})` : 'Support';
 }
@@ -597,7 +597,7 @@ function showUnit(uid, pin = false) {
 function renderSummary() {
   const a = S.data.analysis;
   if (!a) {
-    $('#sumTitle').textContent = S.project?.title || '—';
+    $('#sumTitle').textContent = S.project?.title || '-';
     $('#sumShort').innerHTML = `<p class="muted">${S.data.paragraphs?.length ? 'L’analyse par le LLM n’est pas encore faite (vérifiez qu’Ollama est lancé, puis relancez).' : 'Lancez l’analyse pour obtenir les résumés.'}</p>`;
     for (const id of ['#sumPlan', '#sumLong', '#sumSynth', '#sumSections']) $(id).innerHTML = '';
     return;
@@ -654,17 +654,17 @@ function renderCross() {
   const ec = cross?.ecarts || [];
   const tile = (label, value, sub, q) => `<div class="tile${q != null ? ' has-q' : ''}" ${q != null ? `style="--qc:${qColor(q, 0.55)}"` : ''}><span>${esc(label)}</span><b>${esc(value)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}${q != null ? `<small class="qs"><i style="background:${qColor(q)}"></i>${qLabel(q)}</small>` : ''}</div>`;
   $('#crossTiles').innerHTML = [
-    tile('Support couvert à l’oral', covVals.length ? `${Math.round((covered / covVals.length) * 100)} %` : '—', `${covered} / ${covVals.length} unités`, covVals.length ? lin(covered / covVals.length, 0.4, 0.9) : null),
+    tile('Support couvert à l’oral', covVals.length ? `${Math.round((covered / covVals.length) * 100)} %` : '-', `${covered} / ${covVals.length} unités`, covVals.length ? lin(covered / covVals.length, 0.4, 0.9) : null),
     tile('Contradictions', String(ec.filter((e) => e.type === 'contradiction').length), 'oral ≠ support', a ? lin(ec.filter((e) => e.type === 'contradiction').length, 5, 0) : null),
     tile('Différences', String(ec.filter((e) => e.type === 'difference').length), 'formulation, valeur…'),
     tile('Ajouts à l’oral', String(ec.filter((e) => e.type === 'ajout_oral').length + (cross?.oral_absent_support?.length || 0)), 'absents du support'),
     tile('Lignes du support non expliquées', String(cross?.support_non_explique?.length ?? (S.data.index?.coverage || []).filter((c) => c.score < 0.48).length), 'à revoir dans le support'),
-    tile('Similarité moyenne', avgCov != null ? avgCov.toFixed(2) : '—', 'oral ↔ support', avgCov != null ? lin(avgCov, 0.45, 0.72) : null),
+    tile('Similarité moyenne', avgCov != null ? avgCov.toFixed(2) : '-', 'oral ↔ support', avgCov != null ? lin(avgCov, 0.45, 0.72) : null),
   ].join('');
   $('#crossDiff').innerHTML = cross ? (`<div class="list-items">${ec.filter((e) => e.type !== 'ajout_oral').map((e) => `<div class="li-row">${tBtn(e.t)}<div><span class="tag ${e.type}">${TYPE_LABEL[e.type] || e.type}</span>
       ${e.diapositive ? ` <span class="muted">diapo/page ${e.diapositive}</span>` : ''}<div>${esc(e.detail)}</div></div></div>`).join('') || '<p class="muted">Aucune contradiction ni différence relevée.</p>'}</div>`)
     : '<p class="muted">Disponible après l’analyse par le LLM.</p>';
-  const oral = [...ec.filter((e) => e.type === 'ajout_oral').map((e) => ({ t: e.t, txt: e.detail })), ...(cross?.oral_absent_support || []).map((g) => ({ t: g.t, txt: `${g.terme} — ${g.definition}` }))];
+  const oral = [...ec.filter((e) => e.type === 'ajout_oral').map((e) => ({ t: e.t, txt: e.detail })), ...(cross?.oral_absent_support || []).map((g) => ({ t: g.t, txt: `${g.terme} : ${g.definition}` }))];
   $('#crossOral').innerHTML = cross ? (`<div class="list-items">${oral.map((o) => `<div class="li-row">${tBtn(o.t)}<div>${esc(o.txt)}</div></div>`).join('') || '<p class="muted">Rien d’important hors support.</p>'}</div>`) : '<p class="muted">Disponible après l’analyse par le LLM.</p>';
 
   // Couverture par diapositive / page.
@@ -678,7 +678,7 @@ function renderCross() {
     const weak = lines.filter((l) => l.score < 0.48).sort((x, y) => x.score - y.score);
     return `<div class="cov-unit">
       <div class="cu-thumb" data-unit="${u.id}">${u.image ? `<img loading="lazy" src="${fileUrl(u.image)}" alt="">` : `<div class="thumb txt">${u.n}</div>`}</div>
-      <div><h4>${UNIT_LABEL[u.kind] || ''} ${u.n} — ${esc(u.title).slice(0, 90)}
+      <div><h4>${UNIT_LABEL[u.kind] || ''} ${u.n} : ${esc(u.title).slice(0, 90)}
         ${q != null ? `<span class="tag" style="background:${qColor(q, 0.2)};color:${qColor(q)}">${Math.round(c * 100)} % · ${qLabel(q)}</span>` : ''}
         ${(times[u.id] || []).slice(0, 4).map(([a2]) => tBtn(a2)).join(' ')}</h4>
         ${weak.slice(0, 5).map((l) => `<div class="cov-line"><span>${esc(l.line)}</span><span class="hb-track"><i style="display:block;height:100%;border-radius:99px;width:${Math.max(4, l.score * 100)}%;background:${qColor(lin(l.score, 0.3, 0.6))}"></i></span><span class="muted">peu expliqué</span></div>`).join('')}

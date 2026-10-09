@@ -1,5 +1,5 @@
 /**
- * timeline.js — Timeline / scrubber de l'historique audio (Canvas 2D).
+ * timeline.js : Timeline / scrubber de l'historique audio (Canvas 2D).
  *
  * Affiche graves / médiums / aigus / intensité sur la plage visible,
  * les pics détectés, la fenêtre 3D courante et le curseur de lecture

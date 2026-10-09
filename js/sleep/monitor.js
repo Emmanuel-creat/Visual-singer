@@ -1,5 +1,5 @@
 /**
- * monitor.js — Surveillance acoustique d'une nuit.
+ * monitor.js : Surveillance acoustique d'une nuit.
  *
  * Le traitement est piloté par les blocs audio du worklet (et non par des
  * minuteries), ce qui le rend robuste quand l'onglet passe en arrière-plan.
@@ -76,7 +76,7 @@ export class SleepMonitor extends Emitter {
     const sr = this.audio.sampleRate;
     const now = new Date();
     this.night = {
-      id: nightId(now), version: 1, app: 'Visual Singer — Sommeil',
+      id: nightId(now), version: 1, app: 'Visual Singer - Sommeil',
       start: now.getTime(), end: null, sampleRate: sr,
       lv: [], sc: [], ss: [], minutes: [], events: [], pauses: [], summary: null,
     };

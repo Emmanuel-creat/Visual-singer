@@ -1,4 +1,4 @@
-"""Visual Singer — application de bureau (fenêtres natives, sans navigateur).
+"""Visual Singer - application de bureau (fenêtres natives, sans navigateur).
 
     pythonw app.py --app accueil | detecteur | sommeil | cours
 
@@ -40,9 +40,9 @@ log = logging.getLogger("visual-singer")
 APPS = {
     #  nom          titre de la fenêtre                 page              taille        taille min
     "accueil":   ("Visual Singer",                    "index.html",     (1280, 860), (900, 600)),
-    "detecteur": ("Visual Singer — Détecteur",        "detecteur.html", (1600, 940), (1000, 640)),
-    "sommeil":   ("Visual Singer — Sommeil",          "sommeil.html",   (1440, 900), (900, 600)),
-    "cours":     ("Visual Singer — Cours",            "cours.html",     (1600, 940), (1000, 640)),
+    "detecteur": ("Visual Singer - Détecteur",        "detecteur.html", (1600, 940), (1000, 640)),
+    "sommeil":   ("Visual Singer - Sommeil",          "sommeil.html",   (1440, 900), (900, 600)),
+    "cours":     ("Visual Singer - Cours",            "cours.html",     (1600, 940), (1000, 640)),
 }
 PAGE_TO_APP = {page: name for name, (_, page, _, _) in APPS.items()}
 
@@ -344,7 +344,7 @@ COLORS = {"accueil": "#9085e9", "detecteur": "#ff4d3d", "sommeil": "#3987e5", "c
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Visual Singer — application de bureau")
+    ap = argparse.ArgumentParser(description="Visual Singer - application de bureau")
     ap.add_argument("--app", choices=list(APPS), default="accueil")
     ap.add_argument("--debug", action="store_true")
     args = ap.parse_args()

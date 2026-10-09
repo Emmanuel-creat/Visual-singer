@@ -1,5 +1,5 @@
 /**
- * analysis.js — Statistiques et interprétations d'une nuit (fonctions pures).
+ * analysis.js : Statistiques et interprétations d'une nuit (fonctions pures).
  *
  * Le sommeil est estimé par « actigraphie acoustique » : chaque minute reçoit
  * un score d'activité (mouvements, paroles, toux, bruits), lissé sur les
@@ -17,13 +17,13 @@ const MIN_WAKE_RUN = 3;     // min d'éveil pour compter un réveil
 const pad = (n) => String(n).padStart(2, '0');
 export const clockAt = (start, sec) => { const d = new Date(start + sec * 1000); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 export const fmtDur = (min) => {
-  if (min == null || !Number.isFinite(min)) return '—';
+  if (min == null || !Number.isFinite(min)) return '-';
   const m = Math.round(min);
   return m >= 60 ? `${Math.floor(m / 60)} h ${pad(m % 60)}` : `${m} min`;
 };
 const pct = (x) => `${Math.round(x * 100)} %`;
 /** Nombre au format français (virgule décimale, espace des milliers). */
-export const num = (v, d = 0) => (v == null || !Number.isFinite(v) ? '—' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }));
+export const num = (v, d = 0) => (v == null || !Number.isFinite(v) ? '-' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }));
 const fmtSec = (sec) => (sec < 60 ? `${Math.round(sec)} s` : fmtDur(sec / 60));
 const percentile = (arr, p) => {
   if (!arr.length) return null;
@@ -292,7 +292,7 @@ export function interpret(s, others = []) {
     out.push({
       icon: 'snore', title: 'Ronflements',
       text: `${num(s.snore.count)} ronflements en ${s.snore.episodes} épisode${s.snore.episodes > 1 ? 's' : ''}, soit ${pct(s.snore.pctSleep)} du temps de sommeil (${fmtSec(s.snore.seconds)} cumulées). `
-        + `Heure la plus chargée : ${peakHour ? peakHour.label.replace('h', ' h') : '—'} (${num(peakHour?.snoreMin ?? 0)} min de ronflement). Intensité moyenne ${s.snore.meanDb} dB, maximum ${s.snore.maxDb} dB.`
+        + `Heure la plus chargée : ${peakHour ? peakHour.label.replace('h', ' h') : '-'} (${num(peakHour?.snoreMin ?? 0)} min de ronflement). Intensité moyenne ${s.snore.meanDb} dB, maximum ${s.snore.maxDb} dB.`
         + trend + vsAvg('snorePct', s.snore.pctSleep, (v) => `${Math.round(v * 100)}`, ' pts'),
     });
   } else {
@@ -347,7 +347,7 @@ export function interpret(s, others = []) {
   const types = s.envTypes.slice(0, 4).map((e) => `${e.label} ×${e.count}`).join(', ');
   out.push({
     icon: 'env', title: 'Environnement',
-    text: `Niveau ambiant médian ${s.ambient.l50 ?? '—'} dB (fond ${s.ambient.l90 ?? '—'} dB, pics fréquents ${s.ambient.l10 ?? '—'} dB, maximum ${s.ambient.max ?? '—'} dB). `
+    text: `Niveau ambiant médian ${s.ambient.l50 ?? '-'} dB (fond ${s.ambient.l90 ?? '-'} dB, pics fréquents ${s.ambient.l10 ?? '-'} dB, maximum ${s.ambient.max ?? '-'} dB). `
       + (c.env.episodes ? `${c.env.episodes} bruit${c.env.episodes > 1 ? 's' : ''} environnant${c.env.episodes > 1 ? 's' : ''} : ${types}.` : 'Aucun bruit environnant marquant.')
       + (s.disturbing.length ? ` ${s.disturbing.length === 1 ? "L'un d'eux précède" : `${s.disturbing.length} d'entre eux précèdent`} de peu un réveil (${s.disturbing.slice(0, 3).map((d) => `${d.label} à ${at(d.t0)}`).join(', ')}).` : ''),
   });

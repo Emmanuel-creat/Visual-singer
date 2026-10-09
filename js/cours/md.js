@@ -1,8 +1,10 @@
 /**
- * md.js — Rendu Markdown minimal et sûr (le texte est échappé avant mise en forme).
+ * md.js : Rendu Markdown minimal et sûr (le texte est échappé avant mise en forme).
  * Titres, paragraphes, listes (imbriquées), citations, gras, italique, code, horodatages cliquables.
  */
-export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/** Retire les tirets cadratins des textes du modèle (incise → virgule). */
+export const undash = (s) => String(s ?? '').replace(/\s*[\u2014\u2013]\s*(?=\D)|\s+[\u2014\u2013]\s+/g, ', ').replace(/\u2014/g, '-');
+export const esc = (s) => undash(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function inline(s) {
   let t = esc(s);
