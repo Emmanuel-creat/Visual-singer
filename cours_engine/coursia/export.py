@@ -13,6 +13,44 @@ from .steps.documents import soffice
 from .store import Project
 
 
+CRITIQUE = {"urgence": "Urgence", "contre_indication": "Contre-indication", "piege": "Piège", "exception": "Exception",
+            "critere": "Critère", "seuil": "Seuil"}
+
+
+def fiche_markdown(f: dict) -> list[str]:
+    """Une fiche : en-tête, 1. définitions, 2. mécanismes, 3. points critiques, 4. auto-évaluation."""
+    out = [f"## {f['titre']}", "", f"*Objectif : {f.get('objectif', '')}*", ""]
+    out += [f"- **{x}**" for x in f.get("idees_essentielles") or []] + [""]
+    if f.get("definitions") or f.get("chiffres") or f.get("classifications"):
+        out += ["### 1. Définitions et bases", ""]
+        out += [f"- **{d['terme']}** : {d['definition']}" for d in f.get("definitions") or []]
+        out += [f"- **{c['valeur']}** : {c['signification']}" for c in f.get("chiffres") or []]
+        for c in f.get("classifications") or []:
+            out += [f"- **{c['titre']}** : " + " ; ".join(c.get("elements") or [])]
+        out.append("")
+    if f.get("mecanismes"):
+        out += ["### 2. Mécanismes et raisonnement", ""]
+        for m in f["mecanismes"]:
+            out += [f"**{m['titre']}** : " + " → ".join(m.get("etapes") or []), ""]
+    if f.get("points_critiques") or f.get("a_ne_pas_oublier"):
+        out += ["### 3. Points critiques et exceptions", ""]
+        out += [f"- **À ne pas oublier** : {x}" for x in f.get("a_ne_pas_oublier") or []]
+        out += [f"- **{CRITIQUE.get(c['type'], c['type'])}** : {c['texte']}" for c in f.get("points_critiques") or []]
+        out.append("")
+    comp = f.get("comparatif")
+    if comp:
+        out += [f"**{comp['titre']}**", "", "| Critère | " + " | ".join(comp["colonnes"]) + " |",
+                "|---|" + "---|" * len(comp["colonnes"])]
+        out += ["| " + " | ".join([l["critere"], *[(l["valeurs"] + [""] * len(comp["colonnes"]))[i] for i in range(len(comp["colonnes"]))]]) + " |"
+                for l in comp["lignes"]]
+        out.append("")
+    if f.get("auto_evaluation"):
+        out += ["### 4. Auto-évaluation", ""]
+        out += [f"{i}. {q['question']}" for i, q in enumerate(f["auto_evaluation"], 1)] + [""]
+        out += ["*Réponses* : " + " ; ".join(f"{i}. {q['reponse']}" for i, q in enumerate(f["auto_evaluation"], 1)), ""]
+    return out
+
+
 def build_markdown(project: Project, with_transcript: bool = True) -> str:
     meta = project.meta()
     a = project.result("analyze") or {}
@@ -24,6 +62,11 @@ def build_markdown(project: Project, with_transcript: bool = True) -> str:
         out += ["## Résumé court", "", course["resume_court"], ""]
     if a.get("synthesis"):
         out += ["# Synthèse finale (audio + support)", "", a["synthesis"].strip(), ""]
+    fiches = (project.result("fiches") or {}).get("fiches", [])
+    if fiches:
+        out += ["# Fiches de révision", ""]
+        for f in fiches:
+            out += fiche_markdown(f)
     if course.get("plan"):
         out += ["## Plan du cours", ""]
         secs = a.get("sections", [])
@@ -98,9 +141,26 @@ def markdown_to_docx(md: str, path: Path) -> None:
     d = docx.Document()
     d.styles["Normal"].font.name = "Calibri"
     d.styles["Normal"].font.size = Pt(11)
-    for line in md.splitlines():
-        s = line.rstrip()
+    lines = md.splitlines()
+    i = 0
+    while i < len(lines):
+        s = lines[i].rstrip()
+        i += 1
         if not s:
+            continue
+        if s.startswith("|"):
+            # Tableau Markdown (tableau comparatif des fiches) → vrai tableau Word.
+            rows = [s]
+            while i < len(lines) and lines[i].startswith("|"):
+                rows.append(lines[i].rstrip())
+                i += 1
+            cells = [[c.strip() for c in r.strip("|").split("|")] for r in rows if not re.fullmatch(r"\|[\s:|-]+\|?", r)]
+            ncol = max(len(r) for r in cells)
+            t = d.add_table(rows=len(cells), cols=ncol)
+            t.style = "Light Grid Accent 1"
+            for r, row in enumerate(cells):
+                for c in range(ncol):
+                    _add_runs(t.cell(r, c).paragraphs[0], row[c] if c < len(row) else "")
             continue
         m = re.match(r"^(#{1,4})\s+(.*)", s)
         if m:

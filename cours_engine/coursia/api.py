@@ -10,7 +10,7 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import Body, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -22,7 +22,7 @@ from .hardware import detect, recommend
 from .jobs import STEP_IDS, STEPS, get_runner
 from .steps.analyze import fmt
 from .steps.documents import soffice
-from .store import Project, create_project, delete_project, file_fingerprint, list_projects
+from .store import Project, create_project, delete_project, file_fingerprint, list_projects, read_json, write_json
 
 app = FastAPI(title="Visual Singer - Cours", version=__version__)
 app.add_middleware(GZipMiddleware, minimum_size=2048)
@@ -239,7 +239,21 @@ def data(pid: str, words: bool = False):
         "units": docs.get("units", []), "vocabulary": docs.get("vocabulary", []),
         "index": p.result("index"),
         "analysis": p.result("analyze"),
+        "fiches": (p.result("fiches") or {}).get("fiches", []),
+        "revision": read_json(p.dir / "revision.json", {}) or {},
     }
+
+
+@app.put("/api/projects/{pid}/revision")
+def save_revision(pid: str, body: dict = Body(...)):
+    """Progression de révision (état rouge/orange/vert des chapitres, boîtes des flashcards)."""
+    p = _project(pid)
+    cur = read_json(p.dir / "revision.json", {}) or {}
+    for k in ("chapitres", "cartes", "questions"):
+        if isinstance(body.get(k), dict):
+            cur[k] = {**(cur.get(k) or {}), **body[k]}
+    write_json(p.dir / "revision.json", cur)
+    return cur
 
 
 @app.get("/api/projects/{pid}/words")

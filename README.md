@@ -140,7 +140,11 @@ Le moteur sert aussi les deux autres applications sur ce port.
    - **Résumé** : résumé court, plan, résumé détaillé, synthèse finale audio + support, détail par section.
    - **Notions** : glossaire filtrable, formules, exemples, « à retenir ».
    - **Audio ↔ Support** : contradictions et différences, notions expliquées à l'oral mais absentes du support, couverture orale de chaque diapositive (vert = bien expliquée, rouge = pas abordée).
-   - **Révision** : cartes questions/réponses avec suivi « je savais / à revoir ».
+   - **Révision** :
+     - **Fiches** : une fiche par chapitre du plan, toujours dans le même ordre (en-tête avec objectif et 3 à 5 idées essentielles, 1. définitions et bases, 2. mécanismes en étapes fléchées, 3. points critiques et exceptions, tableau comparatif quand des notions proches existent, 4. auto-évaluation à réponses cachées). Papier ivoire, texte foncé et quatre couleurs fonctionnelles : bleu poudré pour définitions, chiffres et classifications, jaune pastel pour les mécanismes, rouge rosé pour les points critiques, vert sauge réservé au suivi de maîtrise ; surlignage fluo limité à deux alertes par fiche. Impression A4 (une fiche par page, PDF via « Microsoft Print to PDF »).
+     - **Flashcards** : une question précise, une réponse courte ; rappel actif puis répétition espacée (boîtes de Leitner : revues après 1, 2, 4 puis 7 jours, adapté à un planning de révision d'une semaine). Raccourcis : Espace pour retourner, 1 / 2 / 3 pour noter.
+     - **Questions** : questions de révision par section.
+     - **Suivi** : liste rouge / orange / verte des chapitres, triée par priorité (état, puis flashcards les moins sues). La progression est enregistrée dans le dossier du cours (`revision.json`).
    - **Recherche** : recherche sémantique et par mots-clés. Chaque résultat mène au passage audio ou à la diapositive.
    - **Chat** : questions libres. La réponse s'affiche au fil de l'eau, avec des sources cliquables vers le moment de l'audio ou la diapositive.
    - **Export** : Markdown, Word ou PDF.

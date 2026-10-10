@@ -60,14 +60,18 @@ def ctx_size(model: str) -> int:
     return recommend()["llm_ctx"] if "35b" in model or "27b" in model else 16384
 
 
-DASH_RULE = "Style : n'utilise jamais de tiret cadratin ni de tiret demi-cadratin ; utilise une virgule, deux-points ou des parenthèses."
+DASH_RULE = ("Réponds uniquement en français, sans aucun caractère d'une autre écriture (chinois, etc.). "
+             "Style : n'utilise jamais de tiret cadratin ni de tiret demi-cadratin ; utilise une virgule, deux-points ou des parenthèses.")
 _DASH = re.compile("\\s*[\u2014\u2013]\\s*(?=\\D)|\\s+[\u2014\u2013]\\s+")
+# Écritures parasites qu'un modèle multilingue glisse parfois dans un texte français (CJK, coréen, pleine chasse).
+_FOREIGN = re.compile("[\u2e80-\u9fff\uac00-\ud7af\uf900-\ufaff\uff00-\uffef]+")
 
 
 def undash(value):
-    """Retire les tirets cadratins (et demi-cadratins d'incise) des textes produits par le modèle."""
+    """Nettoie les textes du modèle : tirets cadratins (et demi-cadratins d'incise), caractères d'autres écritures."""
     if isinstance(value, str):
-        return _DASH.sub(", ", value).replace("\u2014", "-")
+        value = _DASH.sub(", ", _FOREIGN.sub(" ", value)).replace("\u2014", "-")
+        return re.sub(r"[ \t]{2,}", " ", value)
     if isinstance(value, list):
         return [undash(v) for v in value]
     if isinstance(value, dict):

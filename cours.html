@@ -192,13 +192,37 @@
 
       <!-- Révision -->
       <section class="pane" data-pane="review">
-        <div class="s-card">
+        <div class="rv-top">
+          <div class="seg" id="rvViews" role="group" aria-label="Outils de révision">
+            <button type="button" data-rv="fiches" class="on" aria-pressed="true">Fiches</button>
+            <button type="button" data-rv="cards" aria-pressed="false">Flashcards <small id="rvDue" class="badge-n"></small></button>
+            <button type="button" data-rv="qa" aria-pressed="false">Questions</button>
+            <button type="button" data-rv="suivi" aria-pressed="false">Suivi</button>
+          </div>
+          <div class="row-btns">
+            <button type="button" class="btn btn-ghost" id="rvPrint" title="Fiche affichée, format A4 (choisir « Microsoft Print to PDF » pour un PDF)">Imprimer la fiche</button>
+            <button type="button" class="btn btn-ghost" id="rvPrintAll" title="Toutes les fiches, une par page A4">Imprimer toutes les fiches</button>
+          </div>
+        </div>
+        <p class="rv-empty muted" id="rvEmpty" hidden>Les fiches de révision et les flashcards sont créées à la fin de l'analyse (étape « Fiches de révision »). Pour un cours déjà analysé, cliquez sur « Relancer » : seules les fiches seront calculées.</p>
+
+        <div class="rv-fiches" data-rvpane="fiches">
+          <nav class="f-nav" aria-label="Chapitres"><ol class="f-list" id="fList"></ol>
+            <p class="f-legend"><span class="st-dot rouge"></span>À revoir <span class="st-dot orange"></span>En cours <span class="st-dot vert"></span>Maîtrisé</p></nav>
+          <div class="f-paper" id="fPaper" tabindex="-1"></div>
+        </div>
+
+        <div class="s-card" data-rvpane="cards" hidden><div id="cardsBox" class="cards-box"></div></div>
+
+        <div class="s-card" data-rvpane="qa" hidden>
           <div class="card-head">
-            <h2>Questions de révision</h2>
+            <h2>Questions de révision par section</h2>
             <div class="row-btns"><span class="muted" id="qaScore"></span><button class="btn ghost" type="button" id="qaShuffle">Mélanger les questions</button><button class="btn ghost" type="button" id="qaReveal">Afficher toutes les réponses</button></div>
           </div>
           <div class="qa" id="qa"></div>
         </div>
+
+        <div class="s-card" data-rvpane="suivi" hidden><h2>Suivi des chapitres</h2><div id="suiviBox"></div></div>
       </section>
 
       <!-- Recherche -->

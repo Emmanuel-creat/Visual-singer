@@ -6,6 +6,7 @@
  */
 import { icon, hydrateIcons } from '../icons.js';
 import { markdown, esc, highlight } from './md.js';
+import { initRevision, setRevisionData } from './revision.js';
 import { qColor, qLabel, lin } from '../sleep/quality.js';
 import { qualityLegend } from '../sleep/charts.js';
 import { storage } from '../utils.js';
@@ -72,6 +73,7 @@ async function boot() {
   });
   for (const el of $$('[data-qlegend]')) qualityLegend(el);
   bindUi();
+  initRevision({ api, pid: S.pid, toast, fmt });
   tabs = bindTabs($('.s-tabs'), onTab, { param: 'onglet' });
   tabs.select(hashParams().get('onglet') || 'read', { push: false });
   window.addEventListener('hashchange', () => {
@@ -381,7 +383,7 @@ function bindUi() {
   document.addEventListener('keydown', (e) => {
     if (e.target.closest('input, textarea, select, dialog') || document.querySelector('dialog[open]')) return;
     if (e.key === '/' && S.pid) { e.preventDefault(); showTab('search'); return; }
-    if (!S.media || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!S.media || e.ctrlKey || e.metaKey || e.altKey || S.tab === 'review') return;   // Révision : Espace retourne les flashcards
     if (e.key === ' ' && e.target.closest('button, a, [role="button"], [role="tab"], video, audio')) return;
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.target.closest('[role="tab"]')) return;
     if (e.key === ' ') { e.preventDefault(); S.media.paused ? S.media.play() : S.media.pause(); }
@@ -438,6 +440,7 @@ function renderAll() {
   renderNotions();
   renderCross();
   renderQA();
+  setRevisionData(S.data, S.pid);
   $('#exportNote').textContent = d.analysis ? `Fichiers enregistrés aussi dans le dossier exports du cours.` : 'Disponible après l’analyse.';
 }
 

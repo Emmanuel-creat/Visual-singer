@@ -29,6 +29,7 @@ STEPS = [
     ("paragraphs", "Paragraphes"),
     ("index", "Indexation & rapprochement"),
     ("analyze", "Analyse & synthèse"),
+    ("fiches", "Fiches de révision"),
 ]
 STEP_IDS = [s for s, _ in STEPS]
 
@@ -131,7 +132,7 @@ class Runner:
                 free_gpu()
 
     def _run_pipeline(self, p: Project) -> None:
-        from .steps import analyze, audio, diarize, documents, index, paragraphs, transcribe
+        from .steps import analyze, audio, diarize, documents, fiches, index, paragraphs, transcribe
         p.set_step("_job", status="running", started=time.time(), error=None)
         self.log(p.id, "Début du traitement")
         res: dict = {}
@@ -145,7 +146,10 @@ class Runner:
                     res["documents"] = {"units": [], "vocabulary": []}
                     p.set_step(step, status="skipped", progress=1.0)
                     continue
-                if step == "analyze" and not llm.models_available():
+                if step == "fiches" and not res.get("analyze"):
+                    p.set_step(step, status="skipped", progress=1.0)
+                    continue
+                if step in ("analyze", "fiches") and not llm.models_available():
                     p.set_step(step, status="error", error="Ollama ne répond pas (lancez Ollama puis relancez l'analyse)")
                     self.log(p.id, "Analyse LLM impossible : Ollama ne répond pas")
                     continue
@@ -168,6 +172,8 @@ class Runner:
                     res["index"] = index.run(p, ctx, res["paragraphs"], res["documents"], res["audio"]["duration"], res["transcribe"])
                 elif step == "analyze":
                     res["analyze"] = analyze.run(p, ctx, res["paragraphs"], res["documents"], res["index"])
+                elif step == "fiches":
+                    res["fiches"] = fiches.run(p, ctx, res["paragraphs"], res["documents"], res["analyze"])
                 p.set_step(step, status="done", progress=1.0, seconds=round(time.time() - t0, 1), key=p.key_of(step))
                 free_gpu()
             p.set_step("_job", status="done", finished=time.time())
